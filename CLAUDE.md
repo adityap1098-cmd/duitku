@@ -65,15 +65,15 @@ duitku/
 
 ## Naming Conventions
 
-| What | Convention | Example |
-|------|-----------|---------|
-| Files | kebab-case | `grab-parser.ts`, `transaction-card.tsx` |
-| Types | PascalCase | `Transaction`, `CreateTransactionInput` |
-| Functions | camelCase | `createTransaction`, `parseGrabEmail` |
-| DB tables | snake_case | `transactions`, `sync_logs` |
-| DB columns | snake_case | `user_id`, `created_at` |
-| API routes | kebab-case | `/transactions`, `/sync/trigger` |
-| Env vars | UPPER_SNAKE | `JWT_SECRET`, `GOOGLE_CLIENT_ID` |
+| What       | Convention  | Example                                  |
+| ---------- | ----------- | ---------------------------------------- |
+| Files      | kebab-case  | `grab-parser.ts`, `transaction-card.tsx` |
+| Types      | PascalCase  | `Transaction`, `CreateTransactionInput`  |
+| Functions  | camelCase   | `createTransaction`, `parseGrabEmail`    |
+| DB tables  | snake_case  | `transactions`, `sync_logs`              |
+| DB columns | snake_case  | `user_id`, `created_at`                  |
+| API routes | kebab-case  | `/transactions`, `/sync/trigger`         |
+| Env vars   | UPPER_SNAKE | `JWT_SECRET`, `GOOGLE_CLIENT_ID`         |
 
 ## How To: Add a New API Endpoint
 
@@ -87,16 +87,18 @@ duitku/
 ```
 
 Route pattern:
+
 ```typescript
 // routes/{domain}.ts — THIN, no logic
-app.get('/', async (c) => {
-  const userId = c.get('userId');
+app.get("/", async (c) => {
+  const userId = c.get("userId");
   const result = await someService.list(c.env.DB, userId, query);
   return c.json(result);
 });
 ```
 
 Service pattern:
+
 ```typescript
 // services/{domain}.ts — ALL logic here
 export async function list(db: D1Database, userId: string, filter: Filter) {
@@ -116,11 +118,12 @@ export async function list(db: D1Database, userId: string, filter: Filter) {
 ```
 
 Parser interface:
+
 ```typescript
 interface EmailParser {
-  platform: string;              // 'grab', 'gojek', 'shopee'
-  displayName: string;           // 'Grab', 'Gojek', 'Shopee'
-  senderPatterns: RegExp[];      // match sender email
+  platform: string; // 'grab', 'gojek', 'shopee'
+  displayName: string; // 'Grab', 'Gojek', 'Shopee'
+  senderPatterns: RegExp[]; // match sender email
   parse(email: EmailInput): ParsedTransaction | null;
 }
 ```
@@ -156,6 +159,7 @@ Sekarang semua user = free. Premium nanti di Phase 3.
 ```
 
 Screen hanya render, semua data via hooks:
+
 ```tsx
 export default function TransactionsScreen() {
   const { data, isLoading } = useTransactions(filter);
@@ -172,11 +176,12 @@ export default function TransactionsScreen() {
 ## Error Handling
 
 Worker: throw `AppError(code, message, status)` — JANGAN throw plain Error.
+
 ```typescript
-import { Errors } from '../lib/errors';
-throw Errors.NOT_FOUND('Transaction');
-throw Errors.PREMIUM_REQUIRED('Export Excel');
-throw Errors.VALIDATION('Amount harus > 0');
+import { Errors } from "../lib/errors";
+throw Errors.NOT_FOUND("Transaction");
+throw Errors.PREMIUM_REQUIRED("Export Excel");
+throw Errors.VALIDATION("Amount harus > 0");
 ```
 
 ## Auth Flow
@@ -185,6 +190,21 @@ Google OAuth2 → Worker exchanges code → JWT (15min) + Refresh Token (KV).
 Mobile stores tokens in expo-secure-store. Auto-refresh on 401.
 Every Worker route: `authMiddleware` → sets `c.get('userId')`.
 Manual RLS: every DB query MUST filter by `user_id = ?`.
+
+## UI/UX Design
+
+Semua design rules ada di `DESIGN_SYSTEM.md`. WAJIB baca sebelum bikin/edit komponen UI.
+
+Key points:
+
+- Dark theme only (bg: #0B0F1E)
+- Expense = merah (#FF5A7E), Income = hijau (#00D09C)
+- Pakai design tokens dari `constants/theme.ts` — JANGAN hardcode warna/size
+- Card SELALU punya border 1px (#1E2A4A)
+- Badge source (Synced/Manual) di setiap transaksi
+- Progress bar: hijau (<70%) → orange (70-90%) → merah (>90%)
+- Empty state WAJIB di setiap list/screen
+- Animasi purposeful only, jangan over-animate
 
 ## Don'ts
 

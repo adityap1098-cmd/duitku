@@ -9,9 +9,9 @@ database_name = "duitku-db"
 database_id = "<YOUR_D1_DATABASE_ID>"
 
 # KV Namespace (for refresh tokens)
-# [[kv_namespaces]]
-# binding = "KV"
-# id = "<YOUR_KV_NAMESPACE_ID>"
+[[kv_namespaces]]
+binding = "KV"
+id = "<YOUR_KV_NAMESPACE_ID>"
 
 # R2 Bucket (for receipts/exports — Phase 2+)
 # [[r2_buckets]]
@@ -21,11 +21,13 @@ database_id = "<YOUR_D1_DATABASE_ID>"
 # Environment variables (fill in your values)
 [vars]
 GOOGLE_CLIENT_ID = "<YOUR_GOOGLE_CLIENT_ID>"
+GOOGLE_REDIRECT_URI = "http://localhost:8787/auth/callback"
 ALLOWED_ORIGINS = "http://localhost:8081"
 
 # Secrets (set via `wrangler secret put <NAME>`):
 # - JWT_SECRET
 # - GOOGLE_CLIENT_SECRET
+# - ENCRYPTION_KEY
 
 # Cron triggers for Gmail sync
 [triggers]

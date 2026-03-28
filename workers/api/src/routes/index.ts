@@ -1,6 +1,7 @@
 import type { Hono } from 'hono';
 
 import type { AppEnv } from '../index';
+import { auth } from './auth';
 import { health } from './health';
 
 /**
@@ -9,4 +10,5 @@ import { health } from './health';
  */
 export function registerRoutes(app: Hono<AppEnv>) {
   app.route('/health', health);
+  app.route('/auth', auth);
 }

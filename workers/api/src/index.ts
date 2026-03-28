@@ -10,11 +10,13 @@ import { registerRoutes } from './routes/index';
  */
 export interface Env {
   DB: D1Database;
-  // KV: KVNamespace;        // Phase 2 — refresh tokens
+  KV: KVNamespace;
   // R2: R2Bucket;           // Phase 2 — file storage
   JWT_SECRET: string;
   GOOGLE_CLIENT_ID: string;
   GOOGLE_CLIENT_SECRET: string;
+  GOOGLE_REDIRECT_URI: string;
+  ENCRYPTION_KEY: string;
   ALLOWED_ORIGINS: string;
 }
 
