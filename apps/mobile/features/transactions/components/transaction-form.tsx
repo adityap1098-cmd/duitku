@@ -4,7 +4,7 @@
  * Validates amount as positive integer before submission.
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -15,7 +15,7 @@ import {
   Alert,
   Platform,
 } from 'react-native';
-import { Colors, Typography, Spacing, BorderRadius } from '../../../constants/theme';
+import { useTheme } from '../../../contexts/theme-context';
 import { DEFAULT_CATEGORIES } from '@duitku/shared';
 import type {
   Transaction,
@@ -23,6 +23,7 @@ import type {
   CreateTransactionInput,
   CategoryHint,
 } from '@duitku/shared';
+import type { ColorPalette, TypographySet } from '../../../constants/theme';
 
 interface TransactionFormProps {
   /** Pre-fill values for edit mode */
@@ -56,6 +57,9 @@ export default function TransactionForm({
   onSubmit,
   isSubmitting = false,
 }: TransactionFormProps) {
+  const { Colors, Typography, Spacing, BorderRadius } = useTheme();
+  const styles = useMemo(() => createStyles(Colors, Typography, Spacing, BorderRadius), [Colors, Typography, Spacing, BorderRadius]);
+
   const [type, setType] = useState<TransactionType>(
     initialValues?.type ?? 'expense'
   );
@@ -246,108 +250,110 @@ export default function TransactionForm({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  content: {
-    paddingBottom: Spacing.xxl,
-  },
-  label: {
-    ...Typography.caption,
-    fontWeight: '600',
-    color: Colors.textSecondary,
-    marginBottom: Spacing.xs,
-    marginTop: Spacing.md,
-  },
-  input: {
-    backgroundColor: Colors.surface,
-    borderRadius: BorderRadius.md,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Platform.OS === 'ios' ? Spacing.md : Spacing.sm,
-    ...Typography.body,
-    color: Colors.text,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  notesInput: {
-    minHeight: 80,
-  },
-  typeToggle: {
-    flexDirection: 'row',
-    gap: Spacing.sm,
-  },
-  typeButton: {
-    flex: 1,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.md,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    alignItems: 'center',
-    backgroundColor: Colors.surface,
-  },
-  typeButtonActiveExpense: {
-    borderColor: Colors.expense,
-    backgroundColor: Colors.expense + '20',
-  },
-  typeButtonActiveIncome: {
-    borderColor: Colors.income,
-    backgroundColor: Colors.income + '20',
-  },
-  typeText: {
-    ...Typography.body,
-    fontWeight: '500',
-    color: Colors.textSecondary,
-  },
-  typeTextActive: {
-    color: Colors.text,
-  },
-  categoryGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.sm,
-  },
-  categoryChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
-    borderRadius: BorderRadius.full,
-    backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    gap: 4,
-  },
-  categoryChipActive: {
-    borderColor: Colors.primary,
-    backgroundColor: Colors.primary + '20',
-  },
-  categoryIcon: {
-    fontSize: 16,
-  },
-  categoryText: {
-    ...Typography.label,
-    color: Colors.textSecondary,
-  },
-  categoryTextActive: {
-    color: Colors.primary,
-  },
-  submitButton: {
-    backgroundColor: Colors.primary,
-    borderRadius: BorderRadius.md,
-    paddingVertical: Spacing.md,
-    alignItems: 'center',
-    marginTop: Spacing.lg,
-  },
-  submitPressed: {
-    backgroundColor: Colors.primaryDark,
-  },
-  submitDisabled: {
-    opacity: 0.6,
-  },
-  submitText: {
-    ...Typography.body,
-    fontWeight: '600',
-    color: Colors.text,
-  },
-});
+function createStyles(Colors: ColorPalette, Typography: TypographySet, Spacing: any, BorderRadius: any) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+    },
+    content: {
+      paddingBottom: Spacing.xxl,
+    },
+    label: {
+      ...Typography.caption,
+      fontWeight: '600',
+      color: Colors.textSecondary,
+      marginBottom: Spacing.xs,
+      marginTop: Spacing.md,
+    },
+    input: {
+      backgroundColor: Colors.surface,
+      borderRadius: BorderRadius.md,
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Platform.OS === 'ios' ? Spacing.md : Spacing.sm,
+      ...Typography.body,
+      color: Colors.text,
+      borderWidth: 1,
+      borderColor: Colors.border,
+    },
+    notesInput: {
+      minHeight: 80,
+    },
+    typeToggle: {
+      flexDirection: 'row',
+      gap: Spacing.sm,
+    },
+    typeButton: {
+      flex: 1,
+      paddingVertical: Spacing.sm,
+      borderRadius: BorderRadius.md,
+      borderWidth: 1,
+      borderColor: Colors.border,
+      alignItems: 'center',
+      backgroundColor: Colors.surface,
+    },
+    typeButtonActiveExpense: {
+      borderColor: Colors.expense,
+      backgroundColor: Colors.expense + '20',
+    },
+    typeButtonActiveIncome: {
+      borderColor: Colors.income,
+      backgroundColor: Colors.income + '20',
+    },
+    typeText: {
+      ...Typography.body,
+      fontWeight: '500',
+      color: Colors.textSecondary,
+    },
+    typeTextActive: {
+      color: Colors.text,
+    },
+    categoryGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: Spacing.sm,
+    },
+    categoryChip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: Spacing.sm,
+      paddingVertical: Spacing.xs,
+      borderRadius: BorderRadius.full,
+      backgroundColor: Colors.surface,
+      borderWidth: 1,
+      borderColor: Colors.border,
+      gap: 4,
+    },
+    categoryChipActive: {
+      borderColor: Colors.primary,
+      backgroundColor: Colors.primary + '20',
+    },
+    categoryIcon: {
+      fontSize: 16,
+    },
+    categoryText: {
+      ...Typography.label,
+      color: Colors.textSecondary,
+    },
+    categoryTextActive: {
+      color: Colors.primary,
+    },
+    submitButton: {
+      backgroundColor: Colors.primary,
+      borderRadius: BorderRadius.md,
+      paddingVertical: Spacing.md,
+      alignItems: 'center',
+      marginTop: Spacing.lg,
+    },
+    submitPressed: {
+      backgroundColor: Colors.primaryDark,
+    },
+    submitDisabled: {
+      opacity: 0.6,
+    },
+    submitText: {
+      ...Typography.body,
+      fontWeight: '600',
+      color: Colors.text,
+    },
+  });
+}

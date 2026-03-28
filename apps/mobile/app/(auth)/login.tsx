@@ -1,10 +1,14 @@
+import { useMemo } from 'react';
 import { View, Text, StyleSheet, Pressable, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Colors, Typography, Spacing, BorderRadius } from '../../constants/theme';
+import { useTheme } from '../../contexts/theme-context';
 import { useAuthStore } from '../../stores/auth-store';
+import type { ColorPalette, TypographySet } from '../../constants/theme';
 
 export default function LoginScreen() {
+  const { Colors, Typography, Spacing, BorderRadius } = useTheme();
   const { loginWithGoogle, isAuthenticating, error, clearError } = useAuthStore();
+  const styles = useMemo(() => createStyles(Colors, Typography, Spacing, BorderRadius), [Colors, Typography, Spacing, BorderRadius]);
 
   const handleLogin = async () => {
     clearError();
@@ -67,81 +71,83 @@ export default function LoginScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  content: {
-    flex: 1,
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.xxl,
-  },
-  brandSection: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  logo: {
-    fontSize: 64,
-    marginBottom: Spacing.md,
-  },
-  appName: {
-    ...Typography.h1,
-    fontSize: 36,
-    color: Colors.primary,
-    marginBottom: Spacing.sm,
-  },
-  tagline: {
-    ...Typography.body,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-  },
-  actionSection: {
-    alignItems: 'center',
-  },
-  errorContainer: {
-    backgroundColor: Colors.error + '20', // 20% opacity
-    borderRadius: BorderRadius.md,
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.md,
-    width: '100%',
-    marginBottom: Spacing.md,
-  },
-  errorText: {
-    ...Typography.caption,
-    color: Colors.error,
-    textAlign: 'center',
-  },
-  googleButton: {
-    backgroundColor: Colors.primary,
-    borderRadius: BorderRadius.lg,
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.xl,
-    width: '100%',
-    alignItems: 'center',
-    marginBottom: Spacing.md,
-  },
-  googleButtonPressed: {
-    backgroundColor: Colors.primaryDark,
-  },
-  googleButtonDisabled: {
-    opacity: 0.7,
-  },
-  buttonContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-  },
-  googleButtonText: {
-    ...Typography.body,
-    fontWeight: '600',
-    color: Colors.background,
-  },
-  disclaimer: {
-    ...Typography.label,
-    textAlign: 'center',
-    color: Colors.textMuted,
-  },
-});
+function createStyles(Colors: ColorPalette, Typography: TypographySet, Spacing: any, BorderRadius: any) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: Colors.background,
+    },
+    content: {
+      flex: 1,
+      justifyContent: 'space-between',
+      paddingHorizontal: Spacing.lg,
+      paddingVertical: Spacing.xxl,
+    },
+    brandSection: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    logo: {
+      fontSize: 64,
+      marginBottom: Spacing.md,
+    },
+    appName: {
+      ...Typography.h1,
+      fontSize: 36,
+      color: Colors.primary,
+      marginBottom: Spacing.sm,
+    },
+    tagline: {
+      ...Typography.body,
+      color: Colors.textSecondary,
+      textAlign: 'center',
+    },
+    actionSection: {
+      alignItems: 'center',
+    },
+    errorContainer: {
+      backgroundColor: Colors.error + '20',
+      borderRadius: BorderRadius.md,
+      paddingVertical: Spacing.sm,
+      paddingHorizontal: Spacing.md,
+      width: '100%',
+      marginBottom: Spacing.md,
+    },
+    errorText: {
+      ...Typography.caption,
+      color: Colors.error,
+      textAlign: 'center',
+    },
+    googleButton: {
+      backgroundColor: Colors.primary,
+      borderRadius: BorderRadius.lg,
+      paddingVertical: Spacing.md,
+      paddingHorizontal: Spacing.xl,
+      width: '100%',
+      alignItems: 'center',
+      marginBottom: Spacing.md,
+    },
+    googleButtonPressed: {
+      backgroundColor: Colors.primaryDark,
+    },
+    googleButtonDisabled: {
+      opacity: 0.7,
+    },
+    buttonContent: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.sm,
+    },
+    googleButtonText: {
+      ...Typography.body,
+      fontWeight: '600',
+      color: Colors.background,
+    },
+    disclaimer: {
+      ...Typography.label,
+      textAlign: 'center',
+      color: Colors.textMuted,
+    },
+  });
+}

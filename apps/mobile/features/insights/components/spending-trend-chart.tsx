@@ -1,13 +1,15 @@
 /**
  * SpendingTrendChart — 6-month line chart of total monthly spending.
- * Uses react-native-gifted-charts LineChart with dark theme styling.
+ * Uses react-native-gifted-charts LineChart with theme-aware styling.
  */
 
+import { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { LineChart } from 'react-native-gifted-charts';
-import { Colors, Typography, Spacing, BorderRadius } from '../../../constants/theme';
+import { useTheme } from '../../../contexts/theme-context';
 import { formatRupiah } from '../../../lib/format';
 import type { SpendingTrend } from '@duitku/shared';
+import type { ColorPalette, TypographySet } from '../../../constants/theme';
 
 interface SpendingTrendChartProps {
   data: SpendingTrend[];
@@ -26,6 +28,9 @@ function monthLabel(yyyyMm: string): string {
 }
 
 export default function SpendingTrendChart({ data }: SpendingTrendChartProps) {
+  const { Colors, Typography, Spacing, BorderRadius } = useTheme();
+  const styles = useMemo(() => createStyles(Colors, Typography, Spacing, BorderRadius), [Colors, Typography, Spacing, BorderRadius]);
+
   if (!data || data.length === 0) {
     return (
       <View style={styles.emptyContainer}>
@@ -101,47 +106,49 @@ export default function SpendingTrendChart({ data }: SpendingTrendChartProps) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: Colors.surface,
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.md,
-    paddingRight: Spacing.xs,
-    overflow: 'hidden',
-  },
-  axisLabel: {
-    color: Colors.textMuted,
-    fontSize: 11,
-  },
-  tooltipContainer: {
-    backgroundColor: Colors.surfaceLight,
-    borderRadius: BorderRadius.sm,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
-  },
-  tooltipText: {
-    ...Typography.label,
-    color: Colors.text,
-    fontWeight: '600',
-  },
-  emptyContainer: {
-    backgroundColor: Colors.surface,
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.xl,
-    alignItems: 'center',
-  },
-  emptyIcon: {
-    fontSize: 48,
-    marginBottom: Spacing.sm,
-  },
-  emptyText: {
-    ...Typography.body,
-    fontWeight: '500',
-    marginBottom: Spacing.xs,
-  },
-  emptySubtext: {
-    ...Typography.caption,
-    color: Colors.textMuted,
-    textAlign: 'center',
-  },
-});
+function createStyles(Colors: ColorPalette, Typography: TypographySet, Spacing: any, BorderRadius: any) {
+  return StyleSheet.create({
+    container: {
+      backgroundColor: Colors.surface,
+      borderRadius: BorderRadius.lg,
+      padding: Spacing.md,
+      paddingRight: Spacing.xs,
+      overflow: 'hidden',
+    },
+    axisLabel: {
+      color: Colors.textMuted,
+      fontSize: 11,
+    },
+    tooltipContainer: {
+      backgroundColor: Colors.surfaceLight,
+      borderRadius: BorderRadius.sm,
+      paddingHorizontal: Spacing.sm,
+      paddingVertical: Spacing.xs,
+    },
+    tooltipText: {
+      ...Typography.label,
+      color: Colors.text,
+      fontWeight: '600',
+    },
+    emptyContainer: {
+      backgroundColor: Colors.surface,
+      borderRadius: BorderRadius.lg,
+      padding: Spacing.xl,
+      alignItems: 'center',
+    },
+    emptyIcon: {
+      fontSize: 48,
+      marginBottom: Spacing.sm,
+    },
+    emptyText: {
+      ...Typography.body,
+      fontWeight: '500',
+      marginBottom: Spacing.xs,
+    },
+    emptySubtext: {
+      ...Typography.caption,
+      color: Colors.textMuted,
+      textAlign: 'center',
+    },
+  });
+}

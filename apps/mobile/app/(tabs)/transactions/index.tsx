@@ -2,16 +2,17 @@
  * Transactions list screen — filterable list with FAB to add new transaction.
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { View, Text, FlatList, Pressable, StyleSheet, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { Colors, Typography, Spacing, BorderRadius, Shadows } from '../../../constants/theme';
+import { useTheme } from '../../../contexts/theme-context';
 import { useTransactions } from '../../../features/transactions/hooks/use-transactions';
 import TransactionCard from '../../../features/transactions/components/transaction-card';
 import TransactionFilters from '../../../features/transactions/components/transaction-filters';
 import type { TransactionFilter, Transaction } from '@duitku/shared';
+import type { ColorPalette, TypographySet } from '../../../constants/theme';
 
 /**
  * Get the first and last day of the current month as ISO strings.
@@ -29,6 +30,8 @@ function getCurrentMonthRange(): { date_from: string; date_to: string } {
 
 export default function TransactionsScreen() {
   const router = useRouter();
+  const { Colors, Typography, Spacing, BorderRadius, Shadows } = useTheme();
+  const styles = useMemo(() => createStyles(Colors, Typography, Spacing, BorderRadius, Shadows), [Colors, Typography, Spacing, BorderRadius, Shadows]);
   const monthRange = getCurrentMonthRange();
 
   const [filter, setFilter] = useState<TransactionFilter>({
@@ -107,72 +110,74 @@ export default function TransactionsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background,
-    paddingHorizontal: Spacing.md,
-  },
-  header: {
-    paddingTop: Spacing.md,
-    paddingBottom: Spacing.sm,
-  },
-  title: {
-    ...Typography.h1,
-  },
-  centered: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingBottom: Spacing.xxl,
-  },
-  emptyIcon: {
-    fontSize: 48,
-    marginBottom: Spacing.md,
-  },
-  emptyText: {
-    ...Typography.body,
-    marginBottom: Spacing.xs,
-  },
-  emptyHint: {
-    ...Typography.caption,
-    textAlign: 'center',
-  },
-  errorIcon: {
-    fontSize: 48,
-    marginBottom: Spacing.md,
-  },
-  errorText: {
-    ...Typography.body,
-    color: Colors.error,
-    marginBottom: Spacing.md,
-  },
-  retryButton: {
-    backgroundColor: Colors.surface,
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.md,
-  },
-  retryText: {
-    ...Typography.body,
-    color: Colors.primary,
-  },
-  listContent: {
-    paddingBottom: 80, // space for FAB
-  },
-  fab: {
-    position: 'absolute',
-    right: Spacing.md,
-    bottom: Spacing.lg,
-    width: 56,
-    height: 56,
-    borderRadius: BorderRadius.full,
-    backgroundColor: Colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    ...Shadows.card,
-  },
-  fabPressed: {
-    backgroundColor: Colors.primaryDark,
-  },
-});
+function createStyles(Colors: ColorPalette, Typography: TypographySet, Spacing: any, BorderRadius: any, Shadows: any) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: Colors.background,
+      paddingHorizontal: Spacing.md,
+    },
+    header: {
+      paddingTop: Spacing.md,
+      paddingBottom: Spacing.sm,
+    },
+    title: {
+      ...Typography.h1,
+    },
+    centered: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingBottom: Spacing.xxl,
+    },
+    emptyIcon: {
+      fontSize: 48,
+      marginBottom: Spacing.md,
+    },
+    emptyText: {
+      ...Typography.body,
+      marginBottom: Spacing.xs,
+    },
+    emptyHint: {
+      ...Typography.caption,
+      textAlign: 'center',
+    },
+    errorIcon: {
+      fontSize: 48,
+      marginBottom: Spacing.md,
+    },
+    errorText: {
+      ...Typography.body,
+      color: Colors.error,
+      marginBottom: Spacing.md,
+    },
+    retryButton: {
+      backgroundColor: Colors.surface,
+      paddingHorizontal: Spacing.lg,
+      paddingVertical: Spacing.sm,
+      borderRadius: BorderRadius.md,
+    },
+    retryText: {
+      ...Typography.body,
+      color: Colors.primary,
+    },
+    listContent: {
+      paddingBottom: 80, // space for FAB
+    },
+    fab: {
+      position: 'absolute',
+      right: Spacing.md,
+      bottom: Spacing.lg,
+      width: 56,
+      height: 56,
+      borderRadius: BorderRadius.full,
+      backgroundColor: Colors.primary,
+      justifyContent: 'center',
+      alignItems: 'center',
+      ...Shadows.card,
+    },
+    fabPressed: {
+      backgroundColor: Colors.primaryDark,
+    },
+  });
+}

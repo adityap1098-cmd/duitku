@@ -3,9 +3,11 @@
  * Supports compact mode (just icon + time) for the home screen.
  */
 
+import { useMemo } from 'react';
 import { View, Text, StyleSheet, Pressable, ActivityIndicator } from 'react-native';
-import { Colors, Typography, Spacing, BorderRadius } from '../../../constants/theme';
+import { useTheme } from '../../../contexts/theme-context';
 import { useSyncStatus, useTriggerSync } from '../hooks/use-sync';
+import type { ColorPalette, TypographySet } from '../../../constants/theme';
 
 interface SyncStatusProps {
   /** When true, render only the status icon and relative time (for home screen). */
@@ -40,6 +42,8 @@ function statusIcon(status: string): string {
 }
 
 export default function SyncStatus({ compact = false }: SyncStatusProps) {
+  const { Colors, Typography, Spacing, BorderRadius } = useTheme();
+  const styles = useMemo(() => createStyles(Colors, Typography, Spacing, BorderRadius), [Colors, Typography, Spacing, BorderRadius]);
   const { data: statusResponse, isLoading: isLoadingStatus } = useSyncStatus();
   const triggerSync = useTriggerSync();
 
@@ -149,96 +153,98 @@ export default function SyncStatus({ compact = false }: SyncStatusProps) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: Colors.surface,
-    borderRadius: BorderRadius.md,
-    padding: Spacing.md,
-  },
-  containerCompact: {
-    padding: Spacing.sm,
-  },
-  header: {
-    marginBottom: Spacing.sm,
-  },
-  title: {
-    ...Typography.h3,
-  },
-  emptyText: {
-    ...Typography.caption,
-    marginBottom: Spacing.md,
-  },
-  details: {
-    marginBottom: Spacing.md,
-  },
-  statusRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: Spacing.sm,
-  },
-  statusIcon: {
-    fontSize: 16,
-    marginRight: Spacing.sm,
-  },
-  statusText: {
-    ...Typography.body,
-    flex: 1,
-  },
-  timeText: {
-    ...Typography.caption,
-  },
-  errorText: {
-    ...Typography.caption,
-    color: Colors.error,
-    marginTop: Spacing.xs,
-  },
-  countsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    backgroundColor: Colors.surfaceLight,
-    borderRadius: BorderRadius.sm,
-    padding: Spacing.sm,
-  },
-  countItem: {
-    alignItems: 'center',
-  },
-  countValue: {
-    ...Typography.h3,
-    color: Colors.primary,
-  },
-  countLabel: {
-    ...Typography.label,
-  },
-  compactRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.surface,
-    borderRadius: BorderRadius.sm,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
-  },
-  compactIcon: {
-    fontSize: 14,
-    marginRight: Spacing.xs,
-  },
-  compactText: {
-    ...Typography.caption,
-  },
-  syncButton: {
-    backgroundColor: Colors.primary,
-    borderRadius: BorderRadius.sm,
-    paddingVertical: Spacing.sm,
-    alignItems: 'center',
-  },
-  syncButtonPressed: {
-    backgroundColor: Colors.primaryDark,
-  },
-  syncButtonDisabled: {
-    opacity: 0.6,
-  },
-  syncButtonText: {
-    ...Typography.body,
-    color: Colors.text,
-    fontWeight: '600',
-  },
-});
+function createStyles(Colors: ColorPalette, Typography: TypographySet, Spacing: any, BorderRadius: any) {
+  return StyleSheet.create({
+    container: {
+      backgroundColor: Colors.surface,
+      borderRadius: BorderRadius.md,
+      padding: Spacing.md,
+    },
+    containerCompact: {
+      padding: Spacing.sm,
+    },
+    header: {
+      marginBottom: Spacing.sm,
+    },
+    title: {
+      ...Typography.h3,
+    },
+    emptyText: {
+      ...Typography.caption,
+      marginBottom: Spacing.md,
+    },
+    details: {
+      marginBottom: Spacing.md,
+    },
+    statusRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: Spacing.sm,
+    },
+    statusIcon: {
+      fontSize: 16,
+      marginRight: Spacing.sm,
+    },
+    statusText: {
+      ...Typography.body,
+      flex: 1,
+    },
+    timeText: {
+      ...Typography.caption,
+    },
+    errorText: {
+      ...Typography.caption,
+      color: Colors.error,
+      marginTop: Spacing.xs,
+    },
+    countsRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-around',
+      backgroundColor: Colors.surfaceLight,
+      borderRadius: BorderRadius.sm,
+      padding: Spacing.sm,
+    },
+    countItem: {
+      alignItems: 'center',
+    },
+    countValue: {
+      ...Typography.h3,
+      color: Colors.primary,
+    },
+    countLabel: {
+      ...Typography.label,
+    },
+    compactRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: Colors.surface,
+      borderRadius: BorderRadius.sm,
+      paddingHorizontal: Spacing.sm,
+      paddingVertical: Spacing.xs,
+    },
+    compactIcon: {
+      fontSize: 14,
+      marginRight: Spacing.xs,
+    },
+    compactText: {
+      ...Typography.caption,
+    },
+    syncButton: {
+      backgroundColor: Colors.primary,
+      borderRadius: BorderRadius.sm,
+      paddingVertical: Spacing.sm,
+      alignItems: 'center',
+    },
+    syncButtonPressed: {
+      backgroundColor: Colors.primaryDark,
+    },
+    syncButtonDisabled: {
+      opacity: 0.6,
+    },
+    syncButtonText: {
+      ...Typography.body,
+      color: Colors.text,
+      fontWeight: '600',
+    },
+  });
+}

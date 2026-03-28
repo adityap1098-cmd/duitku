@@ -2,6 +2,7 @@
  * Edit Budget screen — loads budget by ID, shows pre-filled form, allows update & delete.
  */
 
+import { useMemo } from 'react';
 import {
   View,
   Text,
@@ -14,7 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { Colors, Typography, Spacing, BorderRadius } from '../../../constants/theme';
+import { useTheme } from '../../../contexts/theme-context';
 import { get } from '../../../lib/api-client';
 import BudgetForm from '../../../features/budget/components/budget-form';
 import {
@@ -23,9 +24,12 @@ import {
 } from '../../../features/budget/hooks/use-budget-mutations';
 import { budgetKeys } from '../../../features/budget/hooks/use-budgets';
 import type { Budget, CreateBudgetInput, ApiResponse } from '@duitku/shared';
+import type { ColorPalette, TypographySet } from '../../../constants/theme';
 
 export default function EditBudgetScreen() {
   const router = useRouter();
+  const { Colors, Typography, Spacing, BorderRadius } = useTheme();
+  const styles = useMemo(() => createStyles(Colors, Typography, Spacing, BorderRadius), [Colors, Typography, Spacing, BorderRadius]);
   const { id } = useLocalSearchParams<{ id: string }>();
   const updateMutation = useUpdateBudget();
   const deleteMutation = useDeleteBudget();
@@ -112,52 +116,54 @@ export default function EditBudgetScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background,
-    paddingHorizontal: Spacing.md,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingTop: Spacing.md,
-    paddingBottom: Spacing.md,
-  },
-  backButton: {
-    padding: Spacing.xs,
-    marginRight: Spacing.sm,
-  },
-  title: {
-    ...Typography.h2,
-    flex: 1,
-  },
-  deleteButton: {
-    padding: Spacing.xs,
-  },
-  centered: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingBottom: Spacing.xxl,
-  },
-  errorIcon: {
-    fontSize: 48,
-    marginBottom: Spacing.md,
-  },
-  errorText: {
-    ...Typography.body,
-    color: Colors.error,
-    marginBottom: Spacing.md,
-  },
-  backLink: {
-    backgroundColor: Colors.surface,
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.md,
-  },
-  backLinkText: {
-    ...Typography.body,
-    color: Colors.primary,
-  },
-});
+function createStyles(Colors: ColorPalette, Typography: TypographySet, Spacing: any, BorderRadius: any) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: Colors.background,
+      paddingHorizontal: Spacing.md,
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingTop: Spacing.md,
+      paddingBottom: Spacing.md,
+    },
+    backButton: {
+      padding: Spacing.xs,
+      marginRight: Spacing.sm,
+    },
+    title: {
+      ...Typography.h2,
+      flex: 1,
+    },
+    deleteButton: {
+      padding: Spacing.xs,
+    },
+    centered: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingBottom: Spacing.xxl,
+    },
+    errorIcon: {
+      fontSize: 48,
+      marginBottom: Spacing.md,
+    },
+    errorText: {
+      ...Typography.body,
+      color: Colors.error,
+      marginBottom: Spacing.md,
+    },
+    backLink: {
+      backgroundColor: Colors.surface,
+      paddingHorizontal: Spacing.lg,
+      paddingVertical: Spacing.sm,
+      borderRadius: BorderRadius.md,
+    },
+    backLinkText: {
+      ...Typography.body,
+      color: Colors.primary,
+    },
+  });
+}

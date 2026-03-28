@@ -4,12 +4,14 @@
  * Pressable to navigate to the transaction detail/edit screen.
  */
 
+import { useMemo } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Colors, Typography, Spacing, BorderRadius } from '../../../constants/theme';
+import { useTheme } from '../../../contexts/theme-context';
 import { formatRupiah } from '../../../lib/format';
 import { DEFAULT_CATEGORIES } from '@duitku/shared';
 import type { Transaction } from '@duitku/shared';
+import type { ColorPalette, TypographySet } from '../../../constants/theme';
 
 interface TransactionCardProps {
   transaction: Transaction;
@@ -39,6 +41,8 @@ function formatDate(iso: string): string {
 
 export default function TransactionCard({ transaction }: TransactionCardProps) {
   const router = useRouter();
+  const { Colors, Typography, Spacing, BorderRadius } = useTheme();
+  const styles = useMemo(() => createStyles(Colors, Typography, Spacing, BorderRadius), [Colors, Typography, Spacing, BorderRadius]);
   const category = getCategoryDisplay(transaction.category);
   const isIncome = transaction.type === 'income';
 
@@ -85,52 +89,54 @@ export default function TransactionCard({ transaction }: TransactionCardProps) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.surface,
-    borderRadius: BorderRadius.md,
-    padding: Spacing.md,
-    marginBottom: Spacing.sm,
-  },
-  pressed: {
-    backgroundColor: Colors.surfaceLight,
-  },
-  iconContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: BorderRadius.sm,
-    backgroundColor: Colors.surfaceLight,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: Spacing.md,
-  },
-  icon: {
-    fontSize: 22,
-  },
-  details: {
-    flex: 1,
-    marginRight: Spacing.sm,
-  },
-  categoryLabel: {
-    ...Typography.body,
-    fontWeight: '500',
-    marginBottom: 2,
-  },
-  description: {
-    ...Typography.caption,
-    color: Colors.textMuted,
-  },
-  amountSection: {
-    alignItems: 'flex-end',
-  },
-  amount: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 2,
-  },
-  date: {
-    ...Typography.label,
-  },
-});
+function createStyles(Colors: ColorPalette, Typography: TypographySet, Spacing: any, BorderRadius: any) {
+  return StyleSheet.create({
+    container: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: Colors.surface,
+      borderRadius: BorderRadius.md,
+      padding: Spacing.md,
+      marginBottom: Spacing.sm,
+    },
+    pressed: {
+      backgroundColor: Colors.surfaceLight,
+    },
+    iconContainer: {
+      width: 44,
+      height: 44,
+      borderRadius: BorderRadius.sm,
+      backgroundColor: Colors.surfaceLight,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: Spacing.md,
+    },
+    icon: {
+      fontSize: 22,
+    },
+    details: {
+      flex: 1,
+      marginRight: Spacing.sm,
+    },
+    categoryLabel: {
+      ...Typography.body,
+      fontWeight: '500',
+      marginBottom: 2,
+    },
+    description: {
+      ...Typography.caption,
+      color: Colors.textMuted,
+    },
+    amountSection: {
+      alignItems: 'flex-end',
+    },
+    amount: {
+      fontSize: 16,
+      fontWeight: '600',
+      marginBottom: 2,
+    },
+    date: {
+      ...Typography.label,
+    },
+  });
+}

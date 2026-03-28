@@ -4,7 +4,7 @@
  * Matches the SyncStatus card styling used elsewhere on the profile screen.
  */
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -12,8 +12,9 @@ import {
   Pressable,
   ActivityIndicator,
 } from 'react-native';
-import { Colors, Typography, Spacing, BorderRadius } from '../../../constants/theme';
+import { useTheme } from '../../../contexts/theme-context';
 import { useExport } from '../hooks/use-export';
+import type { ColorPalette, TypographySet } from '../../../constants/theme';
 
 /** Indonesian month names for the picker. */
 const MONTH_NAMES = [
@@ -22,6 +23,9 @@ const MONTH_NAMES = [
 ] as const;
 
 export default function ExportSection() {
+  const { Colors, Typography, Spacing, BorderRadius } = useTheme();
+  const styles = useMemo(() => createStyles(Colors, Typography, Spacing, BorderRadius), [Colors, Typography, Spacing, BorderRadius]);
+
   const now = new Date();
   const currentYear = now.getFullYear();
   const currentMonth = now.getMonth() + 1; // 1-indexed
@@ -141,86 +145,88 @@ export default function ExportSection() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: Colors.surface,
-    borderRadius: BorderRadius.md,
-    padding: Spacing.md,
-  },
-  header: {
-    marginBottom: Spacing.sm,
-  },
-  title: {
-    ...Typography.h3,
-  },
-  yearSelector: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.surfaceLight,
-    borderRadius: BorderRadius.sm,
-    paddingVertical: Spacing.xs,
-    paddingHorizontal: Spacing.md,
-    marginBottom: Spacing.sm,
-  },
-  yearText: {
-    ...Typography.body,
-    fontWeight: '600',
-    marginRight: Spacing.sm,
-  },
-  yearHint: {
-    ...Typography.label,
-  },
-  monthSelector: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: Spacing.md,
-  },
-  arrowButton: {
-    width: 40,
-    height: 40,
-    borderRadius: BorderRadius.sm,
-    backgroundColor: Colors.surfaceLight,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  arrowDisabled: {
-    opacity: 0.3,
-  },
-  arrowText: {
-    fontSize: 16,
-    color: Colors.text,
-  },
-  arrowTextDisabled: {
-    color: Colors.textMuted,
-  },
-  monthText: {
-    ...Typography.h3,
-    textAlign: 'center',
-    flex: 1,
-  },
-  downloadButton: {
-    backgroundColor: Colors.info,
-    borderRadius: BorderRadius.sm,
-    paddingVertical: Spacing.sm,
-    alignItems: 'center',
-  },
-  downloadButtonPressed: {
-    opacity: 0.85,
-  },
-  downloadButtonDisabled: {
-    opacity: 0.6,
-  },
-  downloadButtonText: {
-    ...Typography.body,
-    color: Colors.text,
-    fontWeight: '600',
-  },
-  errorText: {
-    ...Typography.caption,
-    color: Colors.error,
-    marginTop: Spacing.sm,
-    textAlign: 'center',
-  },
-});
+function createStyles(Colors: ColorPalette, Typography: TypographySet, Spacing: any, BorderRadius: any) {
+  return StyleSheet.create({
+    container: {
+      backgroundColor: Colors.surface,
+      borderRadius: BorderRadius.md,
+      padding: Spacing.md,
+    },
+    header: {
+      marginBottom: Spacing.sm,
+    },
+    title: {
+      ...Typography.h3,
+    },
+    yearSelector: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: Colors.surfaceLight,
+      borderRadius: BorderRadius.sm,
+      paddingVertical: Spacing.xs,
+      paddingHorizontal: Spacing.md,
+      marginBottom: Spacing.sm,
+    },
+    yearText: {
+      ...Typography.body,
+      fontWeight: '600',
+      marginRight: Spacing.sm,
+    },
+    yearHint: {
+      ...Typography.label,
+    },
+    monthSelector: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: Spacing.md,
+    },
+    arrowButton: {
+      width: 40,
+      height: 40,
+      borderRadius: BorderRadius.sm,
+      backgroundColor: Colors.surfaceLight,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    arrowDisabled: {
+      opacity: 0.3,
+    },
+    arrowText: {
+      fontSize: 16,
+      color: Colors.text,
+    },
+    arrowTextDisabled: {
+      color: Colors.textMuted,
+    },
+    monthText: {
+      ...Typography.h3,
+      textAlign: 'center',
+      flex: 1,
+    },
+    downloadButton: {
+      backgroundColor: Colors.info,
+      borderRadius: BorderRadius.sm,
+      paddingVertical: Spacing.sm,
+      alignItems: 'center',
+    },
+    downloadButtonPressed: {
+      opacity: 0.85,
+    },
+    downloadButtonDisabled: {
+      opacity: 0.6,
+    },
+    downloadButtonText: {
+      ...Typography.body,
+      color: Colors.text,
+      fontWeight: '600',
+    },
+    errorText: {
+      ...Typography.caption,
+      color: Colors.error,
+      marginTop: Spacing.sm,
+      textAlign: 'center',
+    },
+  });
+}

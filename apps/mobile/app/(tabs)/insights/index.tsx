@@ -3,7 +3,7 @@
  * into a scrollable view. Render-only: all data via TanStack Query hooks.
  */
 
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -14,7 +14,7 @@ import {
   RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Colors, Typography, Spacing, BorderRadius } from '../../../constants/theme';
+import { useTheme } from '../../../contexts/theme-context';
 
 import {
   useCategoryBreakdown,
@@ -33,8 +33,12 @@ import MonthComparison from '../../../features/insights/components/month-compari
 import RecurringCard from '../../../features/recurring/components/recurring-card';
 
 import type { RecurringCandidate } from '@duitku/shared';
+import type { ColorPalette, TypographySet } from '../../../constants/theme';
 
 export default function InsightsScreen() {
+  const { Colors, Typography, Spacing, BorderRadius } = useTheme();
+  const styles = useMemo(() => createStyles(Colors, Typography, Spacing, BorderRadius), [Colors, Typography, Spacing, BorderRadius]);
+
   // Insight hooks
   const categoryQuery = useCategoryBreakdown();
   const trendQuery = useSpendingTrend(6);
@@ -128,6 +132,8 @@ export default function InsightsScreen() {
           isLoading={categoryQuery.isLoading}
           error={categoryQuery.error}
           onRetry={() => categoryQuery.refetch()}
+          styles={styles}
+          Colors={Colors}
         >
           <CategoryPieChart data={categories} />
         </SectionBlock>
@@ -138,6 +144,8 @@ export default function InsightsScreen() {
           isLoading={trendQuery.isLoading}
           error={trendQuery.error}
           onRetry={() => trendQuery.refetch()}
+          styles={styles}
+          Colors={Colors}
         >
           <SpendingTrendChart data={trends} />
         </SectionBlock>
@@ -148,6 +156,8 @@ export default function InsightsScreen() {
           isLoading={comparisonQuery.isLoading}
           error={comparisonQuery.error}
           onRetry={() => comparisonQuery.refetch()}
+          styles={styles}
+          Colors={Colors}
         >
           <MonthComparison data={comparison} />
         </SectionBlock>
@@ -158,6 +168,8 @@ export default function InsightsScreen() {
           isLoading={recurringQuery.isLoading}
           error={recurringQuery.error}
           onRetry={() => recurringQuery.refetch()}
+          styles={styles}
+          Colors={Colors}
         >
           {/* Candidate cards with confirm/dismiss */}
           {candidates.length > 0 && (
@@ -214,12 +226,16 @@ function SectionBlock({
   error,
   onRetry,
   children,
+  styles,
+  Colors,
 }: {
   title: string;
   isLoading: boolean;
   error: Error | null;
   onRetry: () => void;
   children: React.ReactNode;
+  styles: ReturnType<typeof createStyles>;
+  Colors: ColorPalette;
 }) {
   return (
     <View style={styles.section}>
@@ -244,94 +260,96 @@ function SectionBlock({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background,
-    paddingHorizontal: Spacing.md,
-  },
-  header: {
-    paddingTop: Spacing.md,
-    paddingBottom: Spacing.sm,
-  },
-  title: {
-    ...Typography.h1,
-  },
-  centered: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingBottom: Spacing.xxl,
-  },
-  scrollContent: {
-    paddingBottom: Spacing.xxl,
-  },
-  section: {
-    marginBottom: Spacing.lg,
-  },
-  sectionTitle: {
-    ...Typography.h3,
-    marginBottom: Spacing.sm,
-  },
-  sectionLoading: {
-    backgroundColor: Colors.surface,
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.xl,
-    alignItems: 'center',
-  },
-  subsection: {
-    marginBottom: Spacing.sm,
-  },
-  subsectionTitle: {
-    ...Typography.caption,
-    fontWeight: '600',
-    color: Colors.textSecondary,
-    marginBottom: Spacing.sm,
-  },
-  errorContainer: {
-    backgroundColor: Colors.surface,
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.lg,
-    alignItems: 'center',
-  },
-  errorIcon: {
-    fontSize: 32,
-    marginBottom: Spacing.sm,
-  },
-  errorText: {
-    ...Typography.body,
-    color: Colors.error,
-    marginBottom: Spacing.sm,
-  },
-  retryButton: {
-    backgroundColor: Colors.surfaceLight,
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.md,
-  },
-  retryText: {
-    ...Typography.caption,
-    fontWeight: '600',
-    color: Colors.primary,
-  },
-  emptyContainer: {
-    backgroundColor: Colors.surface,
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.xl,
-    alignItems: 'center',
-  },
-  emptyIcon: {
-    fontSize: 48,
-    marginBottom: Spacing.sm,
-  },
-  emptyText: {
-    ...Typography.body,
-    fontWeight: '500',
-    marginBottom: Spacing.xs,
-  },
-  emptySubtext: {
-    ...Typography.caption,
-    color: Colors.textMuted,
-    textAlign: 'center',
-  },
-});
+function createStyles(Colors: ColorPalette, Typography: TypographySet, Spacing: any, BorderRadius: any) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: Colors.background,
+      paddingHorizontal: Spacing.md,
+    },
+    header: {
+      paddingTop: Spacing.md,
+      paddingBottom: Spacing.sm,
+    },
+    title: {
+      ...Typography.h1,
+    },
+    centered: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingBottom: Spacing.xxl,
+    },
+    scrollContent: {
+      paddingBottom: Spacing.xxl,
+    },
+    section: {
+      marginBottom: Spacing.lg,
+    },
+    sectionTitle: {
+      ...Typography.h3,
+      marginBottom: Spacing.sm,
+    },
+    sectionLoading: {
+      backgroundColor: Colors.surface,
+      borderRadius: BorderRadius.lg,
+      padding: Spacing.xl,
+      alignItems: 'center',
+    },
+    subsection: {
+      marginBottom: Spacing.sm,
+    },
+    subsectionTitle: {
+      ...Typography.caption,
+      fontWeight: '600',
+      color: Colors.textSecondary,
+      marginBottom: Spacing.sm,
+    },
+    errorContainer: {
+      backgroundColor: Colors.surface,
+      borderRadius: BorderRadius.lg,
+      padding: Spacing.lg,
+      alignItems: 'center',
+    },
+    errorIcon: {
+      fontSize: 32,
+      marginBottom: Spacing.sm,
+    },
+    errorText: {
+      ...Typography.body,
+      color: Colors.error,
+      marginBottom: Spacing.sm,
+    },
+    retryButton: {
+      backgroundColor: Colors.surfaceLight,
+      paddingHorizontal: Spacing.lg,
+      paddingVertical: Spacing.sm,
+      borderRadius: BorderRadius.md,
+    },
+    retryText: {
+      ...Typography.caption,
+      fontWeight: '600',
+      color: Colors.primary,
+    },
+    emptyContainer: {
+      backgroundColor: Colors.surface,
+      borderRadius: BorderRadius.lg,
+      padding: Spacing.xl,
+      alignItems: 'center',
+    },
+    emptyIcon: {
+      fontSize: 48,
+      marginBottom: Spacing.sm,
+    },
+    emptyText: {
+      ...Typography.body,
+      fontWeight: '500',
+      marginBottom: Spacing.xs,
+    },
+    emptySubtext: {
+      ...Typography.caption,
+      color: Colors.textMuted,
+      textAlign: 'center',
+    },
+  });
+}

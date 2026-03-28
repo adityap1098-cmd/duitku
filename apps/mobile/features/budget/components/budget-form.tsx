@@ -4,7 +4,7 @@
  * When creating, filters out categories that already have budgets.
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -15,13 +15,14 @@ import {
   Alert,
   Platform,
 } from 'react-native';
-import { Colors, Typography, Spacing, BorderRadius } from '../../../constants/theme';
+import { useTheme } from '../../../contexts/theme-context';
 import { DEFAULT_CATEGORIES } from '@duitku/shared';
 import type {
   Budget,
   CreateBudgetInput,
   CategoryHint,
 } from '@duitku/shared';
+import type { ColorPalette, TypographySet } from '../../../constants/theme';
 
 interface BudgetFormProps {
   /** Pre-fill values for edit mode */
@@ -40,6 +41,8 @@ export default function BudgetForm({
   onSubmit,
   isSubmitting = false,
 }: BudgetFormProps) {
+  const { Colors, Typography, Spacing, BorderRadius } = useTheme();
+  const styles = useMemo(() => createStyles(Colors, Typography, Spacing, BorderRadius), [Colors, Typography, Spacing, BorderRadius]);
   const isEditMode = !!initialValues;
 
   // In create mode, filter out categories that already have budgets
@@ -164,94 +167,96 @@ export default function BudgetForm({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  content: {
-    paddingBottom: Spacing.xxl,
-  },
-  label: {
-    ...Typography.caption,
-    fontWeight: '600',
-    color: Colors.textSecondary,
-    marginBottom: Spacing.xs,
-    marginTop: Spacing.md,
-  },
-  input: {
-    backgroundColor: Colors.surface,
-    borderRadius: BorderRadius.md,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Platform.OS === 'ios' ? Spacing.md : Spacing.sm,
-    ...Typography.body,
-    color: Colors.text,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  hint: {
-    ...Typography.label,
-    color: Colors.textMuted,
-    marginTop: Spacing.xs,
-  },
-  categoryGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.sm,
-  },
-  categoryChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
-    borderRadius: BorderRadius.full,
-    backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    gap: 4,
-  },
-  categoryChipActive: {
-    borderColor: Colors.primary,
-    backgroundColor: Colors.primary + '20',
-  },
-  categoryChipDisabled: {
-    opacity: 0.7,
-  },
-  categoryIcon: {
-    fontSize: 16,
-  },
-  categoryText: {
-    ...Typography.label,
-    color: Colors.textSecondary,
-  },
-  categoryTextActive: {
-    color: Colors.primary,
-  },
-  noCategoriesBox: {
-    backgroundColor: Colors.surface,
-    borderRadius: BorderRadius.md,
-    padding: Spacing.md,
-    alignItems: 'center',
-  },
-  noCategoriesText: {
-    ...Typography.caption,
-    color: Colors.textMuted,
-  },
-  submitButton: {
-    backgroundColor: Colors.primary,
-    borderRadius: BorderRadius.md,
-    paddingVertical: Spacing.md,
-    alignItems: 'center',
-    marginTop: Spacing.lg,
-  },
-  submitPressed: {
-    backgroundColor: Colors.primaryDark,
-  },
-  submitDisabled: {
-    opacity: 0.6,
-  },
-  submitText: {
-    ...Typography.body,
-    fontWeight: '600',
-    color: Colors.text,
-  },
-});
+function createStyles(Colors: ColorPalette, Typography: TypographySet, Spacing: any, BorderRadius: any) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+    },
+    content: {
+      paddingBottom: Spacing.xxl,
+    },
+    label: {
+      ...Typography.caption,
+      fontWeight: '600',
+      color: Colors.textSecondary,
+      marginBottom: Spacing.xs,
+      marginTop: Spacing.md,
+    },
+    input: {
+      backgroundColor: Colors.surface,
+      borderRadius: BorderRadius.md,
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Platform.OS === 'ios' ? Spacing.md : Spacing.sm,
+      ...Typography.body,
+      color: Colors.text,
+      borderWidth: 1,
+      borderColor: Colors.border,
+    },
+    hint: {
+      ...Typography.label,
+      color: Colors.textMuted,
+      marginTop: Spacing.xs,
+    },
+    categoryGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: Spacing.sm,
+    },
+    categoryChip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: Spacing.sm,
+      paddingVertical: Spacing.xs,
+      borderRadius: BorderRadius.full,
+      backgroundColor: Colors.surface,
+      borderWidth: 1,
+      borderColor: Colors.border,
+      gap: 4,
+    },
+    categoryChipActive: {
+      borderColor: Colors.primary,
+      backgroundColor: Colors.primary + '20',
+    },
+    categoryChipDisabled: {
+      opacity: 0.7,
+    },
+    categoryIcon: {
+      fontSize: 16,
+    },
+    categoryText: {
+      ...Typography.label,
+      color: Colors.textSecondary,
+    },
+    categoryTextActive: {
+      color: Colors.primary,
+    },
+    noCategoriesBox: {
+      backgroundColor: Colors.surface,
+      borderRadius: BorderRadius.md,
+      padding: Spacing.md,
+      alignItems: 'center',
+    },
+    noCategoriesText: {
+      ...Typography.caption,
+      color: Colors.textMuted,
+    },
+    submitButton: {
+      backgroundColor: Colors.primary,
+      borderRadius: BorderRadius.md,
+      paddingVertical: Spacing.md,
+      alignItems: 'center',
+      marginTop: Spacing.lg,
+    },
+    submitPressed: {
+      backgroundColor: Colors.primaryDark,
+    },
+    submitDisabled: {
+      opacity: 0.6,
+    },
+    submitText: {
+      ...Typography.body,
+      fontWeight: '600',
+      color: Colors.text,
+    },
+  });
+}

@@ -237,15 +237,25 @@ export const LightTypography = {
 /** Backward-compatible alias — existing code imports `Typography` */
 export const Typography = DarkTypography;
 
+import type { TextStyle } from 'react-native';
+
+/** A single typography style entry compatible with RN TextStyle */
+type TypoEntry = {
+  readonly fontSize: number;
+  readonly fontWeight: TextStyle['fontWeight'];
+  readonly lineHeight: number;
+  readonly color: string;
+};
+
 /** Structural type for typography that both dark and light sets satisfy */
 export type TypographySet = {
-  readonly h1: { readonly fontSize: number; readonly fontWeight: string; readonly lineHeight: number; readonly color: string };
-  readonly h2: { readonly fontSize: number; readonly fontWeight: string; readonly lineHeight: number; readonly color: string };
-  readonly h3: { readonly fontSize: number; readonly fontWeight: string; readonly lineHeight: number; readonly color: string };
-  readonly body: { readonly fontSize: number; readonly fontWeight: string; readonly lineHeight: number; readonly color: string };
-  readonly caption: { readonly fontSize: number; readonly fontWeight: string; readonly lineHeight: number; readonly color: string };
-  readonly label: { readonly fontSize: number; readonly fontWeight: string; readonly lineHeight: number; readonly color: string };
-  readonly amount: { readonly fontSize: number; readonly fontWeight: string; readonly lineHeight: number; readonly color: string };
+  readonly h1: TypoEntry;
+  readonly h2: TypoEntry;
+  readonly h3: TypoEntry;
+  readonly body: TypoEntry;
+  readonly caption: TypoEntry;
+  readonly label: TypoEntry;
+  readonly amount: TypoEntry;
 };
 
 // --------------- Shadows ---------------

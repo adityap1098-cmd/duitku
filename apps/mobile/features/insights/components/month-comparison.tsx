@@ -3,11 +3,13 @@
  * Green for decreased spending, red for increased (expense context).
  */
 
+import { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { Colors, Typography, Spacing, BorderRadius } from '../../../constants/theme';
+import { useTheme } from '../../../contexts/theme-context';
 import { formatRupiah } from '../../../lib/format';
 import { DEFAULT_CATEGORIES } from '@duitku/shared';
 import type { MonthComparison as MonthComparisonType, CategoryChange } from '@duitku/shared';
+import type { ColorPalette, TypographySet } from '../../../constants/theme';
 
 interface MonthComparisonProps {
   data: MonthComparisonType | null | undefined;
@@ -38,7 +40,7 @@ function getCategoryIcon(categoryId: string): string {
  * Negative change = spending decreased = good (green).
  * Positive change = spending increased = bad (red).
  */
-function formatChange(percentage: number): { text: string; color: string } {
+function formatChange(percentage: number, Colors: ColorPalette): { text: string; color: string } {
   if (percentage === 0) return { text: '→ 0%', color: Colors.textMuted };
   const arrow = percentage > 0 ? '↑' : '↓';
   const color = percentage > 0 ? Colors.error : Colors.success;
@@ -46,6 +48,9 @@ function formatChange(percentage: number): { text: string; color: string } {
 }
 
 export default function MonthComparison({ data }: MonthComparisonProps) {
+  const { Colors, Typography, Spacing, BorderRadius } = useTheme();
+  const styles = useMemo(() => createStyles(Colors, Typography, Spacing, BorderRadius), [Colors, Typography, Spacing, BorderRadius]);
+
   if (!data) {
     return (
       <View style={styles.emptyContainer}>
@@ -58,7 +63,7 @@ export default function MonthComparison({ data }: MonthComparisonProps) {
     );
   }
 
-  const totalChange = formatChange(data.change_percentage);
+  const totalChange = formatChange(data.change_percentage, Colors);
 
   return (
     <View style={styles.container}>
@@ -99,7 +104,8 @@ export default function MonthComparison({ data }: MonthComparisonProps) {
             const change = formatChange(
               item.previous > 0
                 ? ((item.current - item.previous) / item.previous) * 100
-                : item.current > 0 ? 100 : 0
+                : item.current > 0 ? 100 : 0,
+              Colors
             );
             return (
               <View key={item.category} style={styles.categoryRow}>
@@ -126,107 +132,109 @@ export default function MonthComparison({ data }: MonthComparisonProps) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    gap: Spacing.sm,
-  },
-  summaryCard: {
-    backgroundColor: Colors.surface,
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.md,
-  },
-  summaryRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  monthBlock: {
-    flex: 1,
-  },
-  monthBlockRight: {
-    alignItems: 'flex-end',
-  },
-  monthLabel: {
-    ...Typography.label,
-    color: Colors.textMuted,
-    marginBottom: Spacing.xs,
-  },
-  monthAmount: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: Colors.text,
-  },
-  previousAmount: {
-    color: Colors.textSecondary,
-  },
-  changeBlock: {
-    alignItems: 'center',
-    paddingHorizontal: Spacing.sm,
-  },
-  changeText: {
-    fontSize: 16,
-    fontWeight: '700',
-    marginBottom: 2,
-  },
-  changeAmount: {
-    ...Typography.label,
-    color: Colors.textMuted,
-  },
-  categoryList: {
-    backgroundColor: Colors.surface,
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.md,
-  },
-  sectionTitle: {
-    ...Typography.caption,
-    fontWeight: '600',
-    color: Colors.textSecondary,
-    marginBottom: Spacing.sm,
-  },
-  categoryRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: Spacing.xs,
-  },
-  categoryIcon: {
-    fontSize: 18,
-    marginRight: Spacing.sm,
-  },
-  categoryLabel: {
-    ...Typography.caption,
-    color: Colors.text,
-    flex: 1,
-  },
-  categoryAmounts: {
-    alignItems: 'flex-end',
-  },
-  categoryAmount: {
-    ...Typography.caption,
-    fontWeight: '500',
-    color: Colors.text,
-  },
-  categoryChange: {
-    ...Typography.label,
-    fontSize: 11,
-  },
-  emptyContainer: {
-    backgroundColor: Colors.surface,
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.xl,
-    alignItems: 'center',
-  },
-  emptyIcon: {
-    fontSize: 48,
-    marginBottom: Spacing.sm,
-  },
-  emptyText: {
-    ...Typography.body,
-    fontWeight: '500',
-    marginBottom: Spacing.xs,
-  },
-  emptySubtext: {
-    ...Typography.caption,
-    color: Colors.textMuted,
-    textAlign: 'center',
-  },
-});
+function createStyles(Colors: ColorPalette, Typography: TypographySet, Spacing: any, BorderRadius: any) {
+  return StyleSheet.create({
+    container: {
+      gap: Spacing.sm,
+    },
+    summaryCard: {
+      backgroundColor: Colors.surface,
+      borderRadius: BorderRadius.lg,
+      padding: Spacing.md,
+    },
+    summaryRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    monthBlock: {
+      flex: 1,
+    },
+    monthBlockRight: {
+      alignItems: 'flex-end',
+    },
+    monthLabel: {
+      ...Typography.label,
+      color: Colors.textMuted,
+      marginBottom: Spacing.xs,
+    },
+    monthAmount: {
+      fontSize: 18,
+      fontWeight: '700',
+      color: Colors.text,
+    },
+    previousAmount: {
+      color: Colors.textSecondary,
+    },
+    changeBlock: {
+      alignItems: 'center',
+      paddingHorizontal: Spacing.sm,
+    },
+    changeText: {
+      fontSize: 16,
+      fontWeight: '700',
+      marginBottom: 2,
+    },
+    changeAmount: {
+      ...Typography.label,
+      color: Colors.textMuted,
+    },
+    categoryList: {
+      backgroundColor: Colors.surface,
+      borderRadius: BorderRadius.lg,
+      padding: Spacing.md,
+    },
+    sectionTitle: {
+      ...Typography.caption,
+      fontWeight: '600',
+      color: Colors.textSecondary,
+      marginBottom: Spacing.sm,
+    },
+    categoryRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: Spacing.xs,
+    },
+    categoryIcon: {
+      fontSize: 18,
+      marginRight: Spacing.sm,
+    },
+    categoryLabel: {
+      ...Typography.caption,
+      color: Colors.text,
+      flex: 1,
+    },
+    categoryAmounts: {
+      alignItems: 'flex-end',
+    },
+    categoryAmount: {
+      ...Typography.caption,
+      fontWeight: '500',
+      color: Colors.text,
+    },
+    categoryChange: {
+      ...Typography.label,
+      fontSize: 11,
+    },
+    emptyContainer: {
+      backgroundColor: Colors.surface,
+      borderRadius: BorderRadius.lg,
+      padding: Spacing.xl,
+      alignItems: 'center',
+    },
+    emptyIcon: {
+      fontSize: 48,
+      marginBottom: Spacing.sm,
+    },
+    emptyText: {
+      ...Typography.body,
+      fontWeight: '500',
+      marginBottom: Spacing.xs,
+    },
+    emptySubtext: {
+      ...Typography.caption,
+      color: Colors.textMuted,
+      textAlign: 'center',
+    },
+  });
+}

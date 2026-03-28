@@ -1,14 +1,16 @@
 /**
  * CategoryPieChart — donut chart of spending by category.
  * Uses react-native-gifted-charts PieChart with a vivid palette
- * designed for contrast against the dark #0F172A background.
+ * designed for contrast against both dark and light backgrounds.
  */
 
+import { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { PieChart } from 'react-native-gifted-charts';
-import { Colors, Typography, Spacing, BorderRadius } from '../../../constants/theme';
+import { useTheme } from '../../../contexts/theme-context';
 import { formatRupiah } from '../../../lib/format';
 import type { CategoryBreakdown } from '@duitku/shared';
+import type { ColorPalette, TypographySet } from '../../../constants/theme';
 
 interface CategoryPieChartProps {
   data: CategoryBreakdown[];
@@ -33,6 +35,9 @@ const CHART_COLORS = [
 ];
 
 export default function CategoryPieChart({ data }: CategoryPieChartProps) {
+  const { Colors, Typography, Spacing, BorderRadius } = useTheme();
+  const styles = useMemo(() => createStyles(Colors, Typography, Spacing, BorderRadius), [Colors, Typography, Spacing, BorderRadius]);
+
   if (!data || data.length === 0) {
     return (
       <View style={styles.emptyContainer}>
@@ -95,82 +100,84 @@ export default function CategoryPieChart({ data }: CategoryPieChartProps) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: Colors.surface,
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.md,
-  },
-  chartWrapper: {
-    alignItems: 'center',
-    marginBottom: Spacing.md,
-  },
-  centerLabel: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  centerTitle: {
-    ...Typography.label,
-    color: Colors.textMuted,
-  },
-  centerAmount: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: Colors.text,
-  },
-  legend: {
-    gap: Spacing.xs,
-  },
-  legendItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: Spacing.xs,
-  },
-  legendDot: {
-    width: 10,
-    height: 10,
-    borderRadius: BorderRadius.full,
-    marginRight: Spacing.sm,
-  },
-  legendIcon: {
-    fontSize: 16,
-    marginRight: Spacing.xs,
-  },
-  legendLabel: {
-    ...Typography.caption,
-    color: Colors.text,
-    flex: 1,
-  },
-  legendAmount: {
-    ...Typography.caption,
-    fontWeight: '500',
-    color: Colors.text,
-    marginRight: Spacing.sm,
-  },
-  legendPercent: {
-    ...Typography.label,
-    color: Colors.textMuted,
-    width: 36,
-    textAlign: 'right',
-  },
-  emptyContainer: {
-    backgroundColor: Colors.surface,
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.xl,
-    alignItems: 'center',
-  },
-  emptyIcon: {
-    fontSize: 48,
-    marginBottom: Spacing.sm,
-  },
-  emptyText: {
-    ...Typography.body,
-    fontWeight: '500',
-    marginBottom: Spacing.xs,
-  },
-  emptySubtext: {
-    ...Typography.caption,
-    color: Colors.textMuted,
-    textAlign: 'center',
-  },
-});
+function createStyles(Colors: ColorPalette, Typography: TypographySet, Spacing: any, BorderRadius: any) {
+  return StyleSheet.create({
+    container: {
+      backgroundColor: Colors.surface,
+      borderRadius: BorderRadius.lg,
+      padding: Spacing.md,
+    },
+    chartWrapper: {
+      alignItems: 'center',
+      marginBottom: Spacing.md,
+    },
+    centerLabel: {
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    centerTitle: {
+      ...Typography.label,
+      color: Colors.textMuted,
+    },
+    centerAmount: {
+      fontSize: 14,
+      fontWeight: '700',
+      color: Colors.text,
+    },
+    legend: {
+      gap: Spacing.xs,
+    },
+    legendItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: Spacing.xs,
+    },
+    legendDot: {
+      width: 10,
+      height: 10,
+      borderRadius: BorderRadius.full,
+      marginRight: Spacing.sm,
+    },
+    legendIcon: {
+      fontSize: 16,
+      marginRight: Spacing.xs,
+    },
+    legendLabel: {
+      ...Typography.caption,
+      color: Colors.text,
+      flex: 1,
+    },
+    legendAmount: {
+      ...Typography.caption,
+      fontWeight: '500',
+      color: Colors.text,
+      marginRight: Spacing.sm,
+    },
+    legendPercent: {
+      ...Typography.label,
+      color: Colors.textMuted,
+      width: 36,
+      textAlign: 'right',
+    },
+    emptyContainer: {
+      backgroundColor: Colors.surface,
+      borderRadius: BorderRadius.lg,
+      padding: Spacing.xl,
+      alignItems: 'center',
+    },
+    emptyIcon: {
+      fontSize: 48,
+      marginBottom: Spacing.sm,
+    },
+    emptyText: {
+      ...Typography.body,
+      fontWeight: '500',
+      marginBottom: Spacing.xs,
+    },
+    emptySubtext: {
+      ...Typography.caption,
+      color: Colors.textMuted,
+      textAlign: 'center',
+    },
+  });
+}

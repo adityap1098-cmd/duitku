@@ -1,22 +1,27 @@
+import { useMemo } from 'react';
 import { Tabs } from 'expo-router';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { Colors } from '../../constants/theme';
+import { useTheme } from '../../contexts/theme-context';
 
 export default function TabLayout() {
+  const { Colors } = useTheme();
+
+  const tabBarStyle = useMemo(() => ({
+    backgroundColor: Colors.tabBarBackground,
+    borderTopColor: Colors.border,
+    borderTopWidth: 1,
+    paddingBottom: 4,
+    paddingTop: 4,
+    height: 60,
+  }), [Colors]);
+
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: Colors.tabBarActive,
         tabBarInactiveTintColor: Colors.tabBarInactive,
-        tabBarStyle: {
-          backgroundColor: Colors.tabBarBackground,
-          borderTopColor: Colors.border,
-          borderTopWidth: 1,
-          paddingBottom: 4,
-          paddingTop: 4,
-          height: 60,
-        },
+        tabBarStyle,
         tabBarLabelStyle: {
           fontSize: 12,
           fontWeight: '500',

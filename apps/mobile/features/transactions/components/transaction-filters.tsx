@@ -3,10 +3,12 @@
  * Provides type chips (All/Income/Expense), category selector, and date range defaults.
  */
 
+import { useMemo } from 'react';
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
-import { Colors, Typography, Spacing, BorderRadius } from '../../../constants/theme';
+import { useTheme } from '../../../contexts/theme-context';
 import { DEFAULT_CATEGORIES } from '@duitku/shared';
 import type { TransactionFilter, TransactionType, CategoryHint } from '@duitku/shared';
+import type { ColorPalette, TypographySet } from '../../../constants/theme';
 
 interface TransactionFiltersProps {
   filter: TransactionFilter;
@@ -25,6 +27,9 @@ export default function TransactionFilters({
   filter,
   onFilterChange,
 }: TransactionFiltersProps) {
+  const { Colors, Typography, Spacing, BorderRadius } = useTheme();
+  const styles = useMemo(() => createStyles(Colors, Typography, Spacing, BorderRadius), [Colors, Typography, Spacing, BorderRadius]);
+
   const handleTypeChange = (type: TransactionType | undefined) => {
     onFilterChange({ ...filter, type, page: 1 });
   };
@@ -82,46 +87,48 @@ export default function TransactionFilters({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    marginBottom: Spacing.md,
-  },
-  chipRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
-    paddingVertical: Spacing.xs,
-  },
-  chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
-    borderRadius: BorderRadius.full,
-    backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    gap: 4,
-  },
-  chipActive: {
-    borderColor: Colors.primary,
-    backgroundColor: Colors.primary + '20',
-  },
-  chipIcon: {
-    fontSize: 14,
-  },
-  chipText: {
-    ...Typography.label,
-    color: Colors.textSecondary,
-  },
-  chipTextActive: {
-    color: Colors.primary,
-    fontWeight: '600',
-  },
-  divider: {
-    width: 1,
-    height: 20,
-    backgroundColor: Colors.border,
-    marginHorizontal: Spacing.xs,
-  },
-});
+function createStyles(Colors: ColorPalette, Typography: TypographySet, Spacing: any, BorderRadius: any) {
+  return StyleSheet.create({
+    container: {
+      marginBottom: Spacing.md,
+    },
+    chipRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.xs,
+      paddingVertical: Spacing.xs,
+    },
+    chip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: Spacing.sm,
+      paddingVertical: Spacing.xs,
+      borderRadius: BorderRadius.full,
+      backgroundColor: Colors.surface,
+      borderWidth: 1,
+      borderColor: Colors.border,
+      gap: 4,
+    },
+    chipActive: {
+      borderColor: Colors.primary,
+      backgroundColor: Colors.primary + '20',
+    },
+    chipIcon: {
+      fontSize: 14,
+    },
+    chipText: {
+      ...Typography.label,
+      color: Colors.textSecondary,
+    },
+    chipTextActive: {
+      color: Colors.primary,
+      fontWeight: '600',
+    },
+    divider: {
+      width: 1,
+      height: 20,
+      backgroundColor: Colors.border,
+      marginHorizontal: Spacing.xs,
+    },
+  });
+}
