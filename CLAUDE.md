@@ -191,21 +191,6 @@ Mobile stores tokens in expo-secure-store. Auto-refresh on 401.
 Every Worker route: `authMiddleware` → sets `c.get('userId')`.
 Manual RLS: every DB query MUST filter by `user_id = ?`.
 
-## UI/UX Design
-
-Semua design rules ada di `DESIGN_SYSTEM.md`. WAJIB baca sebelum bikin/edit komponen UI.
-
-Key points:
-
-- Dark theme only (bg: #0B0F1E)
-- Expense = merah (#FF5A7E), Income = hijau (#00D09C)
-- Pakai design tokens dari `constants/theme.ts` — JANGAN hardcode warna/size
-- Card SELALU punya border 1px (#1E2A4A)
-- Badge source (Synced/Manual) di setiap transaksi
-- Progress bar: hijau (<70%) → orange (70-90%) → merah (>90%)
-- Empty state WAJIB di setiap list/screen
-- Animasi purposeful only, jangan over-animate
-
 ## Don'ts
 
 - JANGAN taruh business logic di route files
@@ -215,3 +200,127 @@ Key points:
 - JANGAN edit migration lama — buat baru
 - JANGAN simpan raw email body penuh — max 200 char snippet
 - JANGAN auto-merge duplicates — selalu minta user confirm
+
+## UI/UX Design System
+
+Baca section ini sebelum bikin/edit komponen UI.
+
+### Theme: Dark Only
+
+Background: `#0B0F1E`. Tidak ada light mode.
+
+### Colors
+
+```typescript
+// ─── Base ──────────────────────────────
+bg: "#0B0F1E"; // App background
+card: "#131A2E"; // Card background
+cardAlt: "#1A2240"; // Nested/elevated card
+cardBorder: "#1E2A4A"; // Card borders & dividers
+
+// ─── Text ──────────────────────────────
+text: "#FFFFFF"; // Primary (heading, amounts)
+textSec: "#8B9DC3"; // Secondary (labels, descriptions)
+textMuted: "#4A5C80"; // Muted (timestamps, hints)
+
+// ─── Accent & Semantic ─────────────────
+accent: "#00D09C"; // Primary action, income, success
+accentDim: "rgba(0,208,156,0.12)";
+red: "#FF5A7E"; // Expense amounts, delete, error, over-budget
+redDim: "rgba(255,90,126,0.12)";
+orange: "#FFB347"; // Warning, approaching budget limit
+orangeDim: "rgba(255,179,71,0.12)";
+blue: "#5B8DEF"; // Info, manual badge, bank
+blueDim: "rgba(91,141,239,0.12)";
+purple: "#A78BFA"; // Category accent, premium
+pink: "#F472B6"; // Subscription category
+yellow: "#FBBF24"; // Attention, highlight
+
+// ─── Hero Gradient ─────────────────────
+hero1: "#4A3ABA"; // Gradient start
+hero2: "#6C5CE7"; // Gradient middle
+hero3: "#8B7CF0"; // Gradient end
+
+// ─── Platform Colors ───────────────────
+grab: "#00B14F";
+gojek: "#00AA13";
+shopee: "#EE4D2D";
+tokopedia: "#42B549";
+ovo: "#4C2A86";
+dana: "#108EE9";
+```
+
+### Spacing Scale
+
+```
+xs: 4    — gap kecil (antar badge)
+sm: 8    — padding internal kecil
+md: 12   — gap antar items dalam list
+base: 16 — padding card, gap standar
+lg: 20   — padding section/hero
+xl: 24   — gap antar sections
+2xl: 32  — gap besar antar major sections
+```
+
+### Border Radius
+
+```
+sm: 8    — badge, tag
+md: 12   — input, small card, button
+lg: 16   — card, list container
+xl: 20   — hero card, modal
+2xl: 22  — main hero/banner
+full: 9999 — pill button, avatar
+```
+
+### Typography
+
+```
+h1:      fontSize 32, fontWeight 900, letterSpacing -1
+h2:      fontSize 24, fontWeight 800, letterSpacing -0.5
+h3:      fontSize 18, fontWeight 700
+body:    fontSize 14, fontWeight 400
+bodyBold: fontSize 14, fontWeight 700
+sm:      fontSize 12, fontWeight 500
+smBold:  fontSize 12, fontWeight 700
+xs:      fontSize 10, fontWeight 600
+amount:  fontSize 15, fontWeight 800
+amountLg: fontSize 28, fontWeight 900
+label:   fontSize 11, fontWeight 700, letterSpacing 1, uppercase
+badge:   fontSize 9, fontWeight 700
+```
+
+### Color Rules
+
+```
+Expense amount → SELALU merah (red)
+Income amount  → SELALU hijau (accent)
+Budget progress:
+  < 70%  → hijau (accent)
+  70-90% → orange
+  > 90%  → merah (red)
+Card → SELALU punya border 1px (cardBorder)
+Badge source → Synced: accent, Manual: blue
+```
+
+### Component Patterns
+
+**Card:** bg card, borderRadius lg (16), padding base (16), border 1px cardBorder.
+**Hero card:** LinearGradient hero1→hero3, borderRadius 2xl (22), padding lg (20), decorative circle top-right rgba(255,255,255,0.08).
+**List item:** flexDirection row, gap md (12), paddingVertical 14, borderBottom 1px cardBorder.
+**Icon container:** 42x42, borderRadius md (12), bg cardAlt, centered.
+**Badge:** paddingHorizontal 6, paddingVertical 2, borderRadius 4, fontSize 9, fontWeight 700, bg = color + 12% opacity.
+**Progress bar:** height 6, borderRadius 3, bg cardBorder, inner fill with dynamic color.
+**Primary button:** bg accent, paddingVertical 14, borderRadius md (12), text color bg.
+**Danger button:** bg redDim, text color red.
+**FAB:** 52x52, borderRadius lg (16), bg hero2, marginTop -26, shadow hero1.
+
+### UI Don'ts
+
+- JANGAN hardcode warna/size — pakai tokens di atas
+- JANGAN buat card tanpa border
+- JANGAN pakai light/white background
+- JANGAN over-animate — animasi harus purposeful
+- JANGAN lupa empty state di setiap list/screen
+- JANGAN lupa badge source (Synced/Manual) di transaksi
+- JANGAN lupa platform badge (Grab/Shopee/dll) di synced transactions

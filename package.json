@@ -12,7 +12,10 @@
     "build:shared": "cd packages/shared && npm run build",
     "build:api": "cd workers/api && npm run build",
     "dev:api": "cd workers/api && npm run dev",
-    "typecheck": "tsc --noEmit -p packages/shared/tsconfig.json"
+    "dev:mobile": "cd apps/mobile && npm start",
+    "typecheck": "tsc --noEmit -p packages/shared/tsconfig.json",
+    "typecheck:mobile": "cd apps/mobile && npx tsc --noEmit",
+    "typecheck:all": "npm run typecheck && cd workers/api && npx tsc --noEmit && cd ../../apps/mobile && npx tsc --noEmit"
   },
   "engines": {
     "node": ">=18.0.0"
