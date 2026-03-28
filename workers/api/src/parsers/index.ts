@@ -7,12 +7,18 @@ import type { EmailParser } from './_template';
 import { grabParser } from './grab';
 import { gojekParser } from './gojek';
 import { shopeeParser } from './shopee';
+import { bcaParser } from './bca';
+import { mandiriParser } from './mandiri';
+import { bniParser } from './bni';
 
 /** All registered email parsers */
 const parsers: EmailParser[] = [
   grabParser,
   gojekParser,
   shopeeParser,
+  bcaParser,
+  mandiriParser,
+  bniParser,
 ];
 
 /** Get all registered parsers */
