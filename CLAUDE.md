@@ -462,3 +462,173 @@ export function getAmountColor(
 Goal: User buka app terasa **"oh, ini pengeluaran hari ini"** (netral).
 BUKAN **"KAMU BOROS!!!"** (semua merah teriak-teriak).
 Merah cuma muncul saat memang perlu tindakan = over budget.
+
+## Design Enchantments
+
+### Font Pairing
+
+```
+Heading & angka besar (hero) → Outfit (geometric, modern, tebal)
+  - Google Fonts: expo-google-fonts/@expo-google-fonts/outfit
+  - Weight: 700-900 untuk angka hero, 600-700 untuk heading
+
+Angka di list/table → Space Mono (monospace, aligned)
+  - Google Fonts: expo-google-fonts/@expo-google-fonts/space-mono
+  - Weight: 400 normal, 700 bold
+  - SEMUA angka uang di list WAJIB pakai ini agar rata kanan align sempurna
+
+Body text & label → Plus Jakarta Sans (clean, readable)
+  - Google Fonts: expo-google-fonts/@expo-google-fonts/plus-jakarta-sans
+  - Weight: 400-700
+  - Fallback: system font
+```
+
+```typescript
+// constants/theme.ts
+export const fonts = {
+  heading: "Outfit", // Hero amounts, screen titles
+  mono: "SpaceMono", // Transaction amounts di list (aligned)
+  body: "PlusJakartaSans", // Body text, labels, descriptions
+} as const;
+
+// Usage pattern:
+// Hero card amount → fonts.heading, fontSize 28, fontWeight 800
+// List item amount → fonts.mono, fontSize 13, fontWeight 700
+// Description text → fonts.body, fontSize 13, fontWeight 500
+```
+
+### Glassmorphism Cards (Hero & Summary Only)
+
+```
+HANYA untuk hero section dan summary cards. JANGAN untuk list items.
+
+Style:
+  background: rgba(255,255,255,0.05)
+  border: 1px solid rgba(255,255,255,0.08)
+  backdrop-filter: blur(10px)     ← HANYA kalau ada bg blur di belakang
+
+Background blobs (di belakang glass cards):
+  - Blob 1: rgba(108,92,231,0.3), blur(40px), posisi top-right
+  - Blob 2: rgba(0,208,156,0.2), blur(30px), posisi bottom-left
+  - Subtle & blurry, JANGAN terlalu terang
+
+JANGAN pakai glassmorphism di:
+  - Transaction list items (terlalu heavy untuk banyak items)
+  - Cards di dalam ScrollView yang panjang (performance)
+  - Buttons atau badges
+```
+
+### Category Filter Pills
+
+```
+Style: horizontal scroll, pill shape, icon + compact amount
+
+Inactive:
+  background: {categoryColor}10    (10% opacity)
+  border: 1px solid {categoryColor}25  (25% opacity)
+  borderRadius: 20
+  padding: 6px 12px 6px 8px
+
+Active (selected):
+  background: {categoryColor}25    (25% opacity)
+  border: 1px solid {categoryColor}50  (50% opacity)
+
+Content: emoji + compact amount (e.g., "🍔 Rp 1.4jt")
+Position: horizontal scroll di bawah search bar atau di atas transaction list
+```
+
+### Insight Cards — Left Accent Line
+
+```
+Style:
+  background: card color (#131A2E)
+  border: 1px solid cardBorder
+  borderRadius: 12
+  padding: 14px 14px 14px 18px
+  overflow: hidden
+
+Left accent line:
+  position: absolute left, top to bottom
+  width: 4px
+  borderRadius: 2px 0 0 2px
+  background: linear-gradient sesuai tipe insight:
+    Positif (turun/hemat)  → #00D09C → #0D9488 (green gradient)
+    Warning (naik/trend)   → #FFB347 → #FF8C00 (orange gradient)
+    Info (netral)          → #A78BFA → #6C5CE7 (purple gradient)
+    Danger (over budget)   → #FF5A7E → #E5304A (red gradient)
+
+Change badge (inline, di bawah description):
+  background: {color}10
+  borderRadius: 6
+  padding: 3px 8px
+  Content: emoji + percentage/amount
+```
+
+### Donut Chart Enhancement
+
+```
+Enhancements vs basic donut:
+  - strokeLinecap: "round" pada setiap segment (rounded edges)
+  - Subtle glow filter pada segment terbesar:
+    <filter id="glow"><feGaussianBlur stdDeviation="3"/></filter>
+  - Center text: compact total (e.g., "6.2jt") + label "TOTAL"
+  - Center font: fonts.heading (Outfit), fontSize 18, fontWeight 800
+  - Legend di sebelah kanan donut, bukan di bawah (hemat vertical space)
+```
+
+### Compact Number Formatting (Indonesia)
+
+```typescript
+// Untuk tempat yang space terbatas (chart label, pill, summary)
+export function formatCompact(amount: number): string {
+  const abs = Math.abs(amount);
+  if (abs >= 1_000_000_000)
+    return (abs / 1_000_000_000).toFixed(1).replace(".0", "") + "M";
+  if (abs >= 1_000_000)
+    return (abs / 1_000_000).toFixed(1).replace(".0", "") + "jt";
+  if (abs >= 1_000) return (abs / 1_000).toFixed(0) + "rb";
+  return abs.toString();
+}
+
+// Usage:
+// formatCompact(1250000)   → "1.2jt"
+// formatCompact(45000)     → "45rb"
+// formatCompact(186000)    → "186rb"
+// formatCompact(2500000000) → "2.5M"
+
+// KAPAN pakai:
+//   formatCompact()  → chart label, category pill, summary card kecil
+//   formatRupiah()   → transaction list, detail screen, hero amount, everywhere else
+//   JANGAN campur dalam satu konteks yang sama
+```
+
+### Progress Bar Enhancement
+
+```
+Standard progress bar PLUS:
+  - Gradient fill (bukan solid color):
+    Safe:    linear-gradient(90deg, #00D09C, #00B386)
+    Warning: linear-gradient(90deg, #FFB347, #FF8C00)
+    Danger:  linear-gradient(90deg, #FF5A7E, #E5304A)
+  - Background track: rgba(255,255,255,0.06) bukan solid cardBorder
+  - Height: 4-6px (tipis = lebih modern)
+  - Corner: full rounded (borderRadius: height/2)
+```
+
+### Tab Bar Enhancement
+
+```
+Active tab indicator:
+  - BUKAN dot/line di atas
+  - Pakai: icon fill + accent color + subtle glow di bawah:
+    shadowColor: accent
+    shadowOffset: { width: 0, height: 2 }
+    shadowOpacity: 0.3
+    shadowRadius: 4
+
+Center FAB:
+  - Background: linear-gradient(135deg, hero2, hero3)
+  - Shadow: hero1 color, opacity 0.4, radius 14
+  - Raised: marginTop -26 dari tab bar
+  - Icon: plus, strokeWidth 2.5, color white
+```

@@ -26,6 +26,14 @@ export type {
   TransactionSummary,
 } from './types/transaction';
 
+export type {
+  SyncStatus,
+  SyncLog,
+  SyncTriggerResponse,
+  EmailInput,
+  ParsedTransaction,
+} from './types/sync';
+
 // Constants
 export type { CategoryHint, Category } from './constants/categories';
 export { DEFAULT_CATEGORIES } from './constants/categories';
