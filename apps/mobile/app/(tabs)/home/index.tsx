@@ -2,6 +2,7 @@ import { View, Text, StyleSheet, Image, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors, Typography, Spacing, BorderRadius } from '../../../constants/theme';
 import { useAuthStore } from '../../../stores/auth-store';
+import SyncStatus from '../../../features/sync/components/sync-status';
 
 export default function HomeScreen() {
   const { user, logout } = useAuthStore();
@@ -39,6 +40,10 @@ export default function HomeScreen() {
       <View style={styles.card}>
         <Text style={styles.cardLabel}>Total Saldo</Text>
         <Text style={styles.amount}>Rp 0</Text>
+      </View>
+
+      <View style={styles.syncIndicator}>
+        <SyncStatus compact />
       </View>
 
       <View style={styles.section}>
@@ -131,6 +136,9 @@ const styles = StyleSheet.create({
   },
   section: {
     flex: 1,
+  },
+  syncIndicator: {
+    marginBottom: Spacing.md,
   },
   sectionTitle: {
     ...Typography.h3,

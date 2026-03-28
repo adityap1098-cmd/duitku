@@ -1,28 +1,43 @@
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors, Typography, Spacing } from '../../../constants/theme';
+import { useAuthStore } from '../../../stores/auth-store';
+import SyncStatus from '../../../features/sync/components/sync-status';
 
 export default function ProfileScreen() {
+  const { user } = useAuthStore();
+
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Profile</Text>
-      </View>
-
-      <View style={styles.avatarContainer}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>?</Text>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Profile</Text>
         </View>
-        <Text style={styles.userName}>Belum login</Text>
-        <Text style={styles.userEmail}>Login dengan Google untuk mulai</Text>
-      </View>
 
-      <View style={styles.menuSection}>
-        <View style={styles.menuItem}>
-          <Text style={styles.menuLabel}>Versi App</Text>
-          <Text style={styles.menuValue}>0.1.0</Text>
+        <View style={styles.avatarContainer}>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>
+              {user?.name?.charAt(0)?.toUpperCase() ?? '?'}
+            </Text>
+          </View>
+          <Text style={styles.userName}>{user?.name ?? 'Belum login'}</Text>
+          <Text style={styles.userEmail}>
+            {user?.email ?? 'Login dengan Google untuk mulai'}
+          </Text>
         </View>
-      </View>
+
+        {/* Gmail Sync Section */}
+        <View style={styles.syncSection}>
+          <SyncStatus />
+        </View>
+
+        <View style={styles.menuSection}>
+          <View style={styles.menuItem}>
+            <Text style={styles.menuLabel}>Versi App</Text>
+            <Text style={styles.menuValue}>0.1.0</Text>
+          </View>
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -64,10 +79,14 @@ const styles = StyleSheet.create({
   userEmail: {
     ...Typography.caption,
   },
+  syncSection: {
+    marginBottom: Spacing.lg,
+  },
   menuSection: {
     backgroundColor: Colors.surface,
     borderRadius: 12,
     overflow: 'hidden',
+    marginBottom: Spacing.lg,
   },
   menuItem: {
     flexDirection: 'row',
