@@ -3,6 +3,7 @@ import { cors } from 'hono/cors';
 
 import { AppError } from './lib/errors';
 import { registerRoutes } from './routes/index';
+import { syncAllUsers } from './services/sync';
 
 /**
  * Cloudflare Worker environment bindings.
@@ -80,16 +81,33 @@ export default {
 
   /**
    * Cron trigger handler — runs every 6 hours for Gmail sync.
-   * Skeleton for now; implemented in Phase 2 (email sync).
+   * Calls syncAllUsers to process all users with connected Gmail.
    */
   async scheduled(
     _event: ScheduledEvent,
-    _env: Env,
+    env: Env,
     ctx: ExecutionContext
   ) {
     ctx.waitUntil(
       (async () => {
-        console.log('[cron] Gmail sync triggered — not yet implemented');
+        console.log('[cron] Gmail sync triggered');
+        try {
+          const result = await syncAllUsers(
+            env.DB,
+            env.KV,
+            env.ENCRYPTION_KEY,
+            env.GOOGLE_CLIENT_ID,
+            env.GOOGLE_CLIENT_SECRET
+          );
+          console.log(
+            `[cron] Gmail sync complete: ${result.usersProcessed} users, ${result.usersSucceeded} succeeded, ${result.usersFailed} failed`
+          );
+        } catch (err) {
+          console.error(
+            '[cron] Gmail sync failed:',
+            err instanceof Error ? err.message : err
+          );
+        }
       })()
     );
   },
