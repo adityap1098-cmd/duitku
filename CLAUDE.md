@@ -423,3 +423,42 @@ export function formatRupiah(
 // formatRupiah(5000000, 'income') → "+Rp 5.000.000"
 // formatRupiah(1250000)           → "Rp 1.250.000"
 ```
+
+### REVISI: Amount Color Rules
+
+```
+LAMA (semua merah):
+  Expense → #FF5A7E (semua)
+
+BARU (tiered):
+  Normal expense      → #C4C9D4 (muted silver) — tenang, informatif
+  Large expense >500K → #FFB347 (orange) — perhatian, tapi bukan alarm
+  Over-budget item    → #FF5A7E (red) + bg redDim — HANYA ini yang urgent
+  Income / refund     → #00D09C (green) — selalu positif
+  Daily subtotal      → #FF5A7E (red) — OK karena cuma 1 per date group
+  Hero total          → #FFFFFF (white) — netral, nggak judge
+
+Tambahkan ke theme.ts:
+  expenseNormal:  '#C4C9D4'   // default expense amount
+  expenseLarge:   '#FFB347'   // expense > threshold (500K default)
+  expenseOver:    '#FF5A7E'   // category over budget
+  income:         '#00D09C'   // income, refund, positive
+```
+
+```typescript
+// Helper function — WAJIB pakai ini, jangan hardcode warna amount
+export function getAmountColor(
+  amount: number,
+  type: "expense" | "income",
+  isOverBudget?: boolean,
+): string {
+  if (type === "income") return colors.income; // #00D09C
+  if (isOverBudget) return colors.expenseOver; // #FF5A7E
+  if (amount >= 500000) return colors.expenseLarge; // #FFB347
+  return colors.expenseNormal; // #C4C9D4
+}
+```
+
+Goal: User buka app terasa **"oh, ini pengeluaran hari ini"** (netral).
+BUKAN **"KAMU BOROS!!!"** (semua merah teriak-teriak).
+Merah cuma muncul saat memang perlu tindakan = over budget.
