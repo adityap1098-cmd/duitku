@@ -1,12 +1,14 @@
-import { useEffect } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, ActivityIndicator, StyleSheet, AppState, type AppStateStatus } from 'react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Colors } from '../constants/theme';
 import { Config } from '../constants/config';
 import { useAuthStore } from '../stores/auth-store';
+import { useSettingsStore } from '../stores/settings-store';
 import { initNotifications } from '../lib/notifications';
+import { ThemeProvider, useTheme } from '../contexts/theme-context';
+import { BiometricLock } from '../components/biometric-lock';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -44,11 +46,16 @@ function useProtectedRoute() {
 }
 
 /**
- * Root layout with auth guard.
+ * Root layout with auth guard, theme support, and biometric lock.
  * Shows a loading spinner while auth state hydrates from secure storage.
  */
 function RootLayoutInner() {
   const { isLoading } = useAuthStore();
+  const { Colors, isDark } = useTheme();
+  const biometricEnabled = useSettingsStore((s) => s.biometricEnabled);
+
+  const [isLocked, setIsLocked] = useState(false);
+  const appStateRef = useRef<AppStateStatus>(AppState.currentState);
 
   useProtectedRoute();
 
@@ -57,11 +64,32 @@ function RootLayoutInner() {
     initNotifications();
   }, []);
 
+  // Listen for app state changes to trigger biometric lock
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextState) => {
+      // App came from background/inactive to active
+      if (
+        appStateRef.current.match(/inactive|background/) &&
+        nextState === 'active' &&
+        biometricEnabled
+      ) {
+        setIsLocked(true);
+      }
+      appStateRef.current = nextState;
+    });
+
+    return () => subscription.remove();
+  }, [biometricEnabled]);
+
+  const handleUnlock = useCallback(() => {
+    setIsLocked(false);
+  }, []);
+
   // Show loading screen while hydrating auth state from secure storage
   if (isLoading) {
     return (
-      <View style={styles.loadingContainer}>
-        <StatusBar style="light" />
+      <View style={[styles.loadingContainer, { backgroundColor: Colors.background }]}>
+        <StatusBar style={isDark ? 'light' : 'dark'} />
         <ActivityIndicator size="large" color={Colors.primary} />
       </View>
     );
@@ -69,7 +97,7 @@ function RootLayoutInner() {
 
   return (
     <>
-      <StatusBar style="light" />
+      <StatusBar style={isDark ? 'light' : 'dark'} />
       <Stack
         screenOptions={{
           headerShown: false,
@@ -86,6 +114,7 @@ function RootLayoutInner() {
           }}
         />
       </Stack>
+      {isLocked && <BiometricLock onUnlock={handleUnlock} />}
     </>
   );
 }
@@ -93,7 +122,9 @@ function RootLayoutInner() {
 export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
-      <RootLayoutInner />
+      <ThemeProvider>
+        <RootLayoutInner />
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }
@@ -103,6 +134,5 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: Colors.background,
   },
 });
