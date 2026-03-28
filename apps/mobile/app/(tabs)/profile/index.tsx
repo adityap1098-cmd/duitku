@@ -3,6 +3,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors, Typography, Spacing } from '../../../constants/theme';
 import { useAuthStore } from '../../../stores/auth-store';
 import SyncStatus from '../../../features/sync/components/sync-status';
+import ExportSection from '../../../features/export/components/export-section';
 
 export default function ProfileScreen() {
   const { user } = useAuthStore();
@@ -29,6 +30,11 @@ export default function ProfileScreen() {
         {/* Gmail Sync Section */}
         <View style={styles.syncSection}>
           <SyncStatus />
+        </View>
+
+        {/* Export Section */}
+        <View style={styles.exportSection}>
+          <ExportSection />
         </View>
 
         <View style={styles.menuSection}>
@@ -80,6 +86,9 @@ const styles = StyleSheet.create({
     ...Typography.caption,
   },
   syncSection: {
+    marginBottom: Spacing.lg,
+  },
+  exportSection: {
     marginBottom: Spacing.lg,
   },
   menuSection: {
