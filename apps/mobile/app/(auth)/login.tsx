@@ -1,8 +1,21 @@
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors, Typography, Spacing, BorderRadius } from '../../constants/theme';
+import { useAuthStore } from '../../stores/auth-store';
 
 export default function LoginScreen() {
+  const { loginWithGoogle, isAuthenticating, error, clearError } = useAuthStore();
+
+  const handleLogin = async () => {
+    clearError();
+    try {
+      await loginWithGoogle();
+      // Navigation happens automatically via auth guard in _layout.tsx
+    } catch {
+      // Error is already set in the store
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
@@ -15,18 +28,33 @@ export default function LoginScreen() {
         </View>
 
         <View style={styles.actionSection}>
+          {error && (
+            <View style={styles.errorContainer}>
+              <Text style={styles.errorText}>{error}</Text>
+            </View>
+          )}
+
           <Pressable
             style={({ pressed }) => [
               styles.googleButton,
               pressed && styles.googleButtonPressed,
+              isAuthenticating && styles.googleButtonDisabled,
             ]}
-            onPress={() => {
-              // TODO: Implement Google OAuth flow in T05
-            }}
+            onPress={handleLogin}
+            disabled={isAuthenticating}
           >
-            <Text style={styles.googleButtonText}>
-              Login dengan Google
-            </Text>
+            {isAuthenticating ? (
+              <View style={styles.buttonContent}>
+                <ActivityIndicator size="small" color={Colors.background} />
+                <Text style={styles.googleButtonText}>
+                  Menghubungkan...
+                </Text>
+              </View>
+            ) : (
+              <Text style={styles.googleButtonText}>
+                Login dengan Google
+              </Text>
+            )}
           </Pressable>
 
           <Text style={styles.disclaimer}>
@@ -73,6 +101,19 @@ const styles = StyleSheet.create({
   actionSection: {
     alignItems: 'center',
   },
+  errorContainer: {
+    backgroundColor: Colors.error + '20', // 20% opacity
+    borderRadius: BorderRadius.md,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    width: '100%',
+    marginBottom: Spacing.md,
+  },
+  errorText: {
+    ...Typography.caption,
+    color: Colors.error,
+    textAlign: 'center',
+  },
   googleButton: {
     backgroundColor: Colors.primary,
     borderRadius: BorderRadius.lg,
@@ -84,6 +125,14 @@ const styles = StyleSheet.create({
   },
   googleButtonPressed: {
     backgroundColor: Colors.primaryDark,
+  },
+  googleButtonDisabled: {
+    opacity: 0.7,
+  },
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
   },
   googleButtonText: {
     ...Typography.body,
