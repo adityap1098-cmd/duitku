@@ -20,12 +20,14 @@ const queryClient = new QueryClient({
 });
 
 /**
- * Auth guard hook — redirects based on authentication state.
- * - Unauthenticated users on protected routes → redirected to login
- * - Authenticated users on auth routes → redirected to home
+ * Auth guard hook — redirects based on authentication + onboarding state.
+ * - First-launch users (not authenticated, not seen onboarding) → onboarding
+ * - Returning users (not authenticated, seen onboarding) → login
+ * - Authenticated users on auth/onboarding routes → home
  */
 function useProtectedRoute() {
   const { isAuthenticated, isLoading } = useAuthStore();
+  const hasSeenOnboarding = useSettingsStore((s) => s.hasSeenOnboarding);
   const segments = useSegments();
   const router = useRouter();
 
@@ -34,15 +36,19 @@ function useProtectedRoute() {
     if (isLoading) return;
 
     const inAuthGroup = segments[0] === '(auth)';
+    const inOnboardingGroup = segments[0] === '(onboarding)';
 
-    if (!isAuthenticated && !inAuthGroup) {
-      // Not authenticated and not on login → redirect to login
+    if (!isAuthenticated && !hasSeenOnboarding && !inOnboardingGroup) {
+      // First launch — show onboarding before login
+      router.replace('/(onboarding)/index' as const);
+    } else if (!isAuthenticated && hasSeenOnboarding && !inAuthGroup) {
+      // Returning user who's seen onboarding — go to login
       router.replace('/(auth)/login');
-    } else if (isAuthenticated && inAuthGroup) {
-      // Authenticated but on login → redirect to home
+    } else if (isAuthenticated && (inAuthGroup || inOnboardingGroup)) {
+      // Authenticated but on login/onboarding → redirect to home
       router.replace('/(tabs)/home');
     }
-  }, [isAuthenticated, isLoading, segments, router]);
+  }, [isAuthenticated, isLoading, hasSeenOnboarding, segments, router]);
 }
 
 /**
@@ -106,6 +112,12 @@ function RootLayoutInner() {
         }}
       >
         <Stack.Screen name="(tabs)" />
+        <Stack.Screen
+          name="(onboarding)"
+          options={{
+            animation: 'fade',
+          }}
+        />
         <Stack.Screen
           name="(auth)/login"
           options={{
