@@ -43,6 +43,16 @@ export type {
   BudgetStatus,
 } from './types/budget';
 
+export type {
+  CategoryBreakdown,
+  SpendingTrend,
+  CategoryChange,
+  MonthComparison,
+  RecurringCandidate,
+  RecurringTransaction,
+  ConfirmRecurringInput,
+} from './types/insights';
+
 // Constants
 export type { CategoryHint, Category } from './constants/categories';
 export { DEFAULT_CATEGORIES } from './constants/categories';
