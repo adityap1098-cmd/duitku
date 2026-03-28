@@ -1,0 +1,32 @@
+name = "duitku-api"
+main = "src/index.ts"
+compatibility_date = "2024-06-20"
+
+# D1 Database
+[[d1_databases]]
+binding = "DB"
+database_name = "duitku-db"
+database_id = "<YOUR_D1_DATABASE_ID>"
+
+# KV Namespace (for refresh tokens)
+# [[kv_namespaces]]
+# binding = "KV"
+# id = "<YOUR_KV_NAMESPACE_ID>"
+
+# R2 Bucket (for receipts/exports — Phase 2+)
+# [[r2_buckets]]
+# binding = "R2"
+# bucket_name = "duitku-storage"
+
+# Environment variables (fill in your values)
+[vars]
+GOOGLE_CLIENT_ID = "<YOUR_GOOGLE_CLIENT_ID>"
+ALLOWED_ORIGINS = "http://localhost:8081"
+
+# Secrets (set via `wrangler secret put <NAME>`):
+# - JWT_SECRET
+# - GOOGLE_CLIENT_SECRET
+
+# Cron triggers for Gmail sync
+[triggers]
+crons = ["0 */6 * * *"]
