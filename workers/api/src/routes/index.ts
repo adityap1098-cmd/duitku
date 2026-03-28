@@ -3,6 +3,7 @@ import type { Hono } from 'hono';
 import type { AppEnv } from '../index';
 import { auth } from './auth';
 import { health } from './health';
+import { transactions } from './transactions';
 
 /**
  * Register all route groups on the Hono app.
@@ -11,4 +12,5 @@ import { health } from './health';
 export function registerRoutes(app: Hono<AppEnv>) {
   app.route('/health', health);
   app.route('/auth', auth);
+  app.route('/transactions', transactions);
 }

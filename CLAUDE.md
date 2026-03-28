@@ -324,3 +324,102 @@ Badge source → Synced: accent, Manual: blue
 - JANGAN lupa empty state di setiap list/screen
 - JANGAN lupa badge source (Synced/Manual) di transaksi
 - JANGAN lupa platform badge (Grab/Shopee/dll) di synced transactions
+
+## Finance-Specific UX Rules
+
+### Angka = Raja
+
+Angka adalah hal pertama yang user lihat. Harus instantly scannable.
+
+```
+WAJIB:
+- Selalu pakai prefix "Rp " (dengan spasi)
+- Separator titik untuk ribuan: Rp 1.250.000 (BUKAN Rp 1,250,000)
+- Pakai monospace/tabular font KHUSUS untuk angka agar align di list
+- Minus sign eksplisit untuk expense: -Rp 45.000
+- Plus sign untuk income: +Rp 5.000.000
+- Amount SELALU right-aligned di list
+
+Format function:
+  formatRupiah(45000)     → "Rp 45.000"
+  formatRupiah(-45000)    → "-Rp 45.000"
+  formatRupiah(5000000)   → "+Rp 5.000.000"  (income)
+```
+
+### Emotional Color — Jangan Bikin User Takut Buka App
+
+```
+SALAH:  Semua pengeluaran merah terang → user anxiety
+BENAR:  Pengeluaran biasa = soft/muted, alert hanya saat masalah
+
+Color tiers:
+  Normal expense     → red biasa (#FF5A7E) — informative, bukan scary
+  Over-budget        → red BRIGHT + ⚠️ icon + background redDim — INI baru urgent
+  Under budget       → accent green — positif reinforcement
+  Insight positif    → "Hemat 20%!" → green + 🎉 — celebration
+  Insight negatif    → "Naik 40%" → orange (WARNING, bukan red/ERROR)
+
+Goal: App terasa seperti helpful advisor, BUKAN debt collector.
+```
+
+### Data Density — Compact List, Spacious Hero
+
+```
+Hero section      → SPACIOUS (padding 20-24px, banyak breathing room)
+Summary cards     → MEDIUM (padding 14-16px)
+Transaction list  → COMPACT (paddingVertical 12px per item, gap minimal)
+
+Target: 5-6 transaksi visible tanpa scroll di home screen.
+
+JANGAN terlalu banyak whitespace di list — user harus scroll terus = bad UX.
+JANGAN terlalu packed di hero — terasa murah.
+```
+
+### Gesture Interactions
+
+```
+Swipe left on transaction  → Reveal delete button (red)
+Swipe right on transaction → Reveal quick-edit category
+Long press transaction     → Enter multi-select mode (bulk delete/categorize)
+Pull to refresh            → Trigger Gmail sync
+Tap amount on hero card    → Toggle antara "pengeluaran" dan "sisa budget"
+
+Semua gesture WAJIB ada haptic feedback (Haptics.impactAsync).
+```
+
+### Loading & Sync States
+
+```
+Initial load        → Skeleton shimmer (bukan spinner)
+Gmail syncing       → Banner: "Menyinkronkan... 12/25 email" + progress
+Sync complete       → Brief success toast: "✅ 8 transaksi baru"
+Sync error          → Persistent banner: "⚠️ Sync gagal. Tap untuk retry"
+Pull to refresh     → Standard RN refresh control
+Empty first launch  → Friendly empty state dengan CTA "Mulai Sync Gmail"
+
+JANGAN pakai loading spinner di tengah layar — selalu skeleton atau inline indicator.
+```
+
+### Number Formatting Helper
+
+```typescript
+// Ini WAJIB dipakai di semua tempat yang tampilkan uang
+// JANGAN format manual pakai template string
+
+export function formatRupiah(
+  amount: number,
+  type?: "expense" | "income",
+): string {
+  const abs = Math.abs(amount);
+  const formatted = abs.toLocaleString("id-ID");
+
+  if (type === "income" || amount > 0) return `+Rp ${formatted}`;
+  if (type === "expense" || amount < 0) return `-Rp ${formatted}`;
+  return `Rp ${formatted}`;
+}
+
+// Usage:
+// formatRupiah(45000, 'expense')  → "-Rp 45.000"
+// formatRupiah(5000000, 'income') → "+Rp 5.000.000"
+// formatRupiah(1250000)           → "Rp 1.250.000"
+```
