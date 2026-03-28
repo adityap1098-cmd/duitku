@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Colors } from '../constants/theme';
 import { Config } from '../constants/config';
 import { useAuthStore } from '../stores/auth-store';
+import { initNotifications } from '../lib/notifications';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -50,6 +51,11 @@ function RootLayoutInner() {
   const { isLoading } = useAuthStore();
 
   useProtectedRoute();
+
+  // Request notification permissions on app startup
+  useEffect(() => {
+    initNotifications();
+  }, []);
 
   // Show loading screen while hydrating auth state from secure storage
   if (isLoading) {

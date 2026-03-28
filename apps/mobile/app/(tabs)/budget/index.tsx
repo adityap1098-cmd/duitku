@@ -18,12 +18,16 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Colors, Typography, Spacing, BorderRadius, Shadows } from '../../../constants/theme';
 import { formatRupiah } from '../../../lib/format';
 import { useBudgetStatus } from '../../../features/budget/hooks/use-budgets';
+import { useBudgetAlerts } from '../../../features/budget/hooks/use-budget-alerts';
 import BudgetCard from '../../../features/budget/components/budget-card';
 import type { BudgetWithSpending } from '@duitku/shared';
 
 export default function BudgetScreen() {
   const router = useRouter();
   const { data, isLoading, error, refetch } = useBudgetStatus();
+
+  // Fire local push notifications for budget threshold crossings
+  useBudgetAlerts();
 
   const budgetStatus = data?.data;
   const budgets = budgetStatus?.budgets ?? [];
