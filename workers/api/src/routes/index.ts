@@ -3,6 +3,7 @@ import type { Hono } from 'hono';
 import type { AppEnv } from '../index';
 import { auth } from './auth';
 import { budgets } from './budgets';
+import { exportRoutes } from './export';
 import { health } from './health';
 import { insights } from './insights';
 import { recurring } from './recurring';
@@ -17,6 +18,7 @@ export function registerRoutes(app: Hono<AppEnv>) {
   app.route('/health', health);
   app.route('/auth', auth);
   app.route('/budgets', budgets);
+  app.route('/export', exportRoutes);
   app.route('/insights', insights);
   app.route('/recurring', recurring);
   app.route('/transactions', transactions);

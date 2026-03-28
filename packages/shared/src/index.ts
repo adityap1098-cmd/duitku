@@ -53,6 +53,11 @@ export type {
   ConfirmRecurringInput,
 } from './types/insights';
 
+export type {
+  ExportFilter,
+  ExportMeta,
+} from './types/export';
+
 // Constants
 export type { CategoryHint, Category } from './constants/categories';
 export { DEFAULT_CATEGORIES } from './constants/categories';
