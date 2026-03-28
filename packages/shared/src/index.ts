@@ -34,6 +34,15 @@ export type {
   ParsedTransaction,
 } from './types/sync';
 
+export type {
+  BudgetPeriod,
+  Budget,
+  CreateBudgetInput,
+  UpdateBudgetInput,
+  BudgetWithSpending,
+  BudgetStatus,
+} from './types/budget';
+
 // Constants
 export type { CategoryHint, Category } from './constants/categories';
 export { DEFAULT_CATEGORIES } from './constants/categories';

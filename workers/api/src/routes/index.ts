@@ -2,6 +2,7 @@ import type { Hono } from 'hono';
 
 import type { AppEnv } from '../index';
 import { auth } from './auth';
+import { budgets } from './budgets';
 import { health } from './health';
 import { sync } from './sync';
 import { transactions } from './transactions';
@@ -13,6 +14,7 @@ import { transactions } from './transactions';
 export function registerRoutes(app: Hono<AppEnv>) {
   app.route('/health', health);
   app.route('/auth', auth);
+  app.route('/budgets', budgets);
   app.route('/transactions', transactions);
   app.route('/sync', sync);
 }
