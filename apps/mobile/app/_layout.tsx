@@ -3,12 +3,17 @@ import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { View, ActivityIndicator, StyleSheet, AppState, type AppStateStatus } from 'react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import * as WebBrowser from 'expo-web-browser';
 import { Config } from '../constants/config';
 import { useAuthStore } from '../stores/auth-store';
 import { useSettingsStore } from '../stores/settings-store';
 import { initNotifications } from '../lib/notifications';
 import { ThemeProvider, useTheme } from '../contexts/theme-context';
 import { BiometricLock } from '../components/biometric-lock';
+
+// MUST be called at module level in root layout to intercept OAuth redirects
+// before expo-router tries to match the deep link to a route.
+WebBrowser.maybeCompleteAuthSession();
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -40,13 +45,13 @@ function useProtectedRoute() {
 
     if (!isAuthenticated && !hasSeenOnboarding && !inOnboardingGroup) {
       // First launch — show onboarding before login
-      router.replace('/(onboarding)/index' as const);
+      router.replace('/(onboarding)' as never);
     } else if (!isAuthenticated && hasSeenOnboarding && !inAuthGroup) {
       // Returning user who's seen onboarding — go to login
-      router.replace('/(auth)/login');
+      router.replace('/(auth)/login' as never);
     } else if (isAuthenticated && (inAuthGroup || inOnboardingGroup)) {
       // Authenticated but on login/onboarding → redirect to home
-      router.replace('/(tabs)/home');
+      router.replace('/(tabs)/home' as never);
     }
   }, [isAuthenticated, isLoading, hasSeenOnboarding, segments, router]);
 }
@@ -111,6 +116,7 @@ function RootLayoutInner() {
           animation: 'slide_from_right',
         }}
       >
+        <Stack.Screen name="index" options={{ animation: 'none' }} />
         <Stack.Screen name="(tabs)" />
         <Stack.Screen
           name="(onboarding)"
@@ -119,10 +125,17 @@ function RootLayoutInner() {
           }}
         />
         <Stack.Screen
-          name="(auth)/login"
+          name="(auth)"
           options={{
             presentation: 'modal',
             animation: 'slide_from_bottom',
+          }}
+        />
+        <Stack.Screen
+          name="auth/callback"
+          options={{
+            headerShown: false,
+            animation: 'none',
           }}
         />
       </Stack>

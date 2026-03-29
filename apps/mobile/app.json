@@ -25,7 +25,9 @@
       "package": "com.duitku.app",
       "permissions": [
         "USE_BIOMETRIC",
-        "USE_FINGERPRINT"
+        "USE_FINGERPRINT",
+        "android.permission.USE_BIOMETRIC",
+        "android.permission.USE_FINGERPRINT"
       ]
     },
     "web": {
@@ -44,8 +46,10 @@
     },
     "extra": {
       "eas": {
-        "projectId": "YOUR_EAS_PROJECT_ID"
-      }
-    }
+        "projectId": "400aa8d0-39f1-4fe4-99aa-1f919ba0d9f3"
+      },
+      "router": {}
+    },
+    "owner": "aditye"
   }
 }

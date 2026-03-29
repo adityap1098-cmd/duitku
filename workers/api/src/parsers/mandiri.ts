@@ -9,22 +9,63 @@ import type { EmailParser } from './_template';
 import { parseRupiahAmount, truncateSnippet, extractDate } from './_template';
 
 /** Detect whether the transaction is a debit (expense) or credit (income) */
-function detectTransactionType(text: string): 'income' | 'expense' {
-  const lower = text.toLowerCase();
+function detectTransactionType(subject: string, body: string): 'income' | 'expense' {
+  // Check subject first — most reliable signal
+  const subjectLower = subject.toLowerCase();
 
-  // Credit keywords → income
+  // Debit keywords → expense
   if (
-    lower.includes('kredit') ||
-    lower.includes('credit') ||
-    lower.includes('masuk') ||
-    lower.includes('penerimaan') ||
-    lower.includes('terima') ||
-    lower.includes('diterima')
+    subjectLower.includes('debet') ||
+    subjectLower.includes('debit') ||
+    subjectLower.includes('keluar') ||
+    subjectLower.includes('pengeluaran') ||
+    subjectLower.includes('pembelian') ||
+    subjectLower.includes('pembayaran') ||
+    subjectLower.includes('pemindahan dana')
+  ) {
+    return 'expense';
+  }
+
+  // Credit keywords in subject → income
+  if (
+    subjectLower.includes('kredit') ||
+    subjectLower.includes('masuk') ||
+    subjectLower.includes('penerimaan') ||
+    subjectLower.includes('terima')
   ) {
     return 'income';
   }
 
-  // Debit keywords → expense (also the default)
+  // Fallback: check body (but skip CSS/style noise)
+  const bodyLower = body.toLowerCase();
+
+  // Look for "Tipe Transaksi" pattern common in Livin' by Mandiri
+  const tipeMatch = bodyLower.match(/tipe\s*transaksi\s*[:\s]*(\S+)/);
+  if (tipeMatch) {
+    const tipe = tipeMatch[1];
+    if (tipe.includes('debet') || tipe.includes('debit')) return 'expense';
+    if (tipe.includes('kredit') || tipe.includes('credit')) return 'income';
+  }
+
+  // Check body keywords
+  if (
+    bodyLower.includes('debet') ||
+    bodyLower.includes('debit') ||
+    bodyLower.includes('keluar') ||
+    bodyLower.includes('pengeluaran')
+  ) {
+    return 'expense';
+  }
+
+  if (
+    bodyLower.includes('kredit') ||
+    bodyLower.includes('masuk') ||
+    bodyLower.includes('penerimaan')
+  ) {
+    return 'income';
+  }
+
+  // Default to expense — safer assumption for a finance tracker
   return 'expense';
 }
 
@@ -86,15 +127,18 @@ export const mandiriParser: EmailParser = {
     const amount = extractAmount(fullText);
     if (amount === null) return null;
 
-    // Detect transaction direction
-    const type = detectTransactionType(fullText);
+    // Detect transaction direction — pass subject and body separately
+    // so subject (reliable) is checked before body (may have HTML noise)
+    const type = detectTransactionType(subject, body);
 
     // Detect category
     const category = detectCategory(fullText);
 
-    // Build description
+    // Build description from subject if available
     const direction = type === 'income' ? 'Credit' : 'Debit';
-    const description = `Mandiri ${direction} notification`;
+    const description = subject
+      ? `Mandiri: ${subject.substring(0, 80)}`
+      : `Mandiri ${direction} notification`;
 
     return {
       amount,

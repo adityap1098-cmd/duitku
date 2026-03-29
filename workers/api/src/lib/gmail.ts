@@ -174,8 +174,12 @@ export function decodeBase64Url(data: string): string {
  */
 function stripHtml(html: string): string {
   return html
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '') // Remove style blocks entirely
+    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '') // Remove script blocks
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<\/p>/gi, '\n')
+    .replace(/<\/tr>/gi, '\n')
+    .replace(/<\/td>/gi, ' ')
     .replace(/<[^>]+>/g, '')
     .replace(/&amp;/g, '&')
     .replace(/&lt;/g, '<')
@@ -183,6 +187,7 @@ function stripHtml(html: string): string {
     .replace(/&quot;/g, '"')
     .replace(/&#39;/g, "'")
     .replace(/&nbsp;/g, ' ')
+    .replace(/[ \t]+/g, ' ') // Collapse whitespace
     .replace(/\n{3,}/g, '\n\n')
     .trim();
 }

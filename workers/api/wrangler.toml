@@ -9,9 +9,9 @@ database_name = "duitku-db"
 database_id = "<YOUR_D1_DATABASE_ID>"
 
 # KV Namespace (for refresh tokens)
-# [[kv_namespaces]]
-# binding = "KV"
-# id = "<YOUR_KV_NAMESPACE_ID>"
+[[kv_namespaces]]
+binding = "KV"
+id = "local-kv-dev"
 
 # R2 Bucket (for receipts/exports — Phase 2+)
 # [[r2_buckets]]
@@ -20,8 +20,8 @@ database_id = "<YOUR_D1_DATABASE_ID>"
 
 # Environment variables (fill in your values)
 [vars]
-GOOGLE_CLIENT_ID = "<YOUR_GOOGLE_CLIENT_ID>"
-ALLOWED_ORIGINS = "http://localhost:8081"
+GOOGLE_CLIENT_ID = "695257571068-kd7rpjmpuajo4notqnvl931im2a7971s.apps.googleusercontent.com"
+ALLOWED_ORIGINS = "http://localhost:8081,https://auth.expo.io,https://benefit-bold-usr-earned.trycloudflare.com"
 
 # Secrets (set via `wrangler secret put <NAME>`):
 # - JWT_SECRET

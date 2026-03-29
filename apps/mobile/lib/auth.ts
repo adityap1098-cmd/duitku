@@ -1,11 +1,19 @@
 /**
  * Auth module — Google OAuth2 flow, token storage, refresh logic.
- * Uses expo-auth-session for OAuth and expo-secure-store for token persistence.
+ *
+ * Flow (Worker-mediated, Expo Go compatible):
+ * 1. App opens Worker /auth/google via tunnel URL
+ * 2. Worker redirects to Google consent with redirect_uri = localhost callback
+ * 3. Google sends code to Worker (via localhost, reached by adb reverse)
+ * 4. Worker exchanges code, returns HTML page with window.location = exp://... deep link
+ * 5. Android opens deep link in Expo Go
+ * 6. expo-router auth/callback route captures the data and processes login
  */
 
 import * as AuthSession from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
 import * as SecureStore from 'expo-secure-store';
+import * as Linking from 'expo-linking';
 
 import type { AuthTokens, UserProfile } from '@duitku/shared';
 import { Config } from '../constants/config';
@@ -13,17 +21,10 @@ import { Config } from '../constants/config';
 // Ensure browser redirects are completed on mount
 WebBrowser.maybeCompleteAuthSession();
 
-/** Google OAuth2 discovery document */
-const discovery: AuthSession.DiscoveryDocument = {
-  authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
-  tokenEndpoint: 'https://oauth2.googleapis.com/token',
-  revocationEndpoint: 'https://oauth2.googleapis.com/revoke',
-};
-
 /** Storage keys for tokens */
 const STORAGE = Config.STORAGE_KEYS;
 
-/** Callback response from the Worker /auth/callback endpoint */
+/** Callback response from the Worker */
 interface AuthCallbackResponse {
   tokens: AuthTokens;
   user: UserProfile;
@@ -32,31 +33,19 @@ interface AuthCallbackResponse {
 
 // --------------- Token Storage ---------------
 
-/**
- * Store tokens in expo-secure-store (encrypted on device).
- */
 export async function storeTokens(tokens: AuthTokens): Promise<void> {
   await SecureStore.setItemAsync(STORAGE.ACCESS_TOKEN, tokens.access_token);
   await SecureStore.setItemAsync(STORAGE.REFRESH_TOKEN, tokens.refresh_token);
 }
 
-/**
- * Get the current access token from secure storage.
- */
 export async function getAccessToken(): Promise<string | null> {
   return SecureStore.getItemAsync(STORAGE.ACCESS_TOKEN);
 }
 
-/**
- * Get the current refresh token from secure storage.
- */
 export async function getRefreshToken(): Promise<string | null> {
   return SecureStore.getItemAsync(STORAGE.REFRESH_TOKEN);
 }
 
-/**
- * Clear all stored tokens (logout).
- */
 export async function clearTokens(): Promise<void> {
   await SecureStore.deleteItemAsync(STORAGE.ACCESS_TOKEN);
   await SecureStore.deleteItemAsync(STORAGE.REFRESH_TOKEN);
@@ -65,69 +54,83 @@ export async function clearTokens(): Promise<void> {
 // --------------- OAuth Flow ---------------
 
 /**
- * Login with Google via the Worker's OAuth flow.
+ * Login with Google via Worker-mediated OAuth flow.
  *
- * Flow:
- * 1. Open Worker /auth/google in a web browser (redirects to Google consent)
- * 2. Google redirects back to Worker /auth/callback with the authorization code
- * 3. Worker exchanges code for tokens, creates/updates user, returns JWT + user
- * 4. We capture the callback response and store the JWT tokens locally
- *
- * Since the Worker handles the full exchange, the mobile app uses
- * a web browser flow pointing at the Worker, which redirects back
- * with the auth result via our app's deep link scheme.
+ * Uses Linking.addEventListener to capture the deep link redirect,
+ * since WebBrowser.openAuthSessionAsync doesn't reliably capture
+ * exp:// deep links from HTTP 302 redirects via worker callback.
  */
 export async function login(): Promise<AuthCallbackResponse> {
-  // Build the redirect URI back to our app
-  const redirectUri = AuthSession.makeRedirectUri({
-    scheme: Config.SCHEME,
-    path: 'auth/callback',
-  });
+  return new Promise<AuthCallbackResponse>(async (resolve, reject) => {
+    // Build the return URI for the app
+    const returnUri = AuthSession.makeRedirectUri({
+      scheme: Config.SCHEME,
+      path: 'auth/callback',
+    });
 
-  // Build the Worker auth URL with a state param containing our redirect URI
-  const state = encodeURIComponent(redirectUri);
-  const authUrl = `${Config.API_URL}/auth/google?state=${state}&redirect_uri=${encodeURIComponent(redirectUri)}`;
+    console.log('[auth] returnUri:', returnUri);
 
-  // Open the browser for the OAuth flow
-  const result = await WebBrowser.openAuthSessionAsync(authUrl, redirectUri);
+    // Listen for the deep link redirect
+    const handleRedirect = async (event: { url: string }) => {
+      console.log('[auth] Deep link received:', event.url);
 
-  if (result.type !== 'success' || !result.url) {
-    throw new AuthError('LOGIN_CANCELLED', 'Login was cancelled or failed');
-  }
+      try {
+        const url = new URL(event.url);
+        const errorParam = url.searchParams.get('error');
+        if (errorParam) {
+          reject(new AuthError('OAUTH_ERROR', decodeURIComponent(errorParam)));
+          return;
+        }
 
-  // Parse tokens and user from the redirect URL params
-  const url = new URL(result.url);
-  const responseData = url.searchParams.get('data');
+        const responseData = url.searchParams.get('data');
+        if (!responseData) {
+          reject(new AuthError('NO_AUTH_DATA', 'No authentication data received'));
+          return;
+        }
 
-  if (!responseData) {
-    // Alternative: the Worker may have encoded data differently
-    // Try to extract from hash fragment
-    const hashParams = new URLSearchParams(url.hash.replace('#', ''));
-    const hashData = hashParams.get('data');
+        const parsed: AuthCallbackResponse = JSON.parse(decodeURIComponent(responseData));
+        await storeTokens(parsed.tokens);
+        resolve(parsed);
+      } catch (err) {
+        reject(new AuthError('PARSE_ERROR', `Failed to parse auth data: ${err}`));
+      }
+    };
 
-    if (!hashData) {
-      throw new AuthError('NO_AUTH_DATA', 'No authentication data received from server');
+    // Subscribe to deep link events
+    const subscription = Linking.addEventListener('url', handleRedirect);
+
+    try {
+      // Open Worker auth URL in browser
+      const state = encodeURIComponent(returnUri);
+      const authUrl = `${Config.API_URL}/auth/google?state=${state}`;
+
+      console.log('[auth] Opening:', authUrl);
+
+      // Open browser — don't wait for specific redirect URL matching,
+      // the Linking event listener handles the deep link capture
+      const result = await WebBrowser.openBrowserAsync(authUrl);
+
+      console.log('[auth] Browser closed, type:', result.type);
+
+      // If browser was dismissed without redirect, reject after a short delay
+      // (the deep link handler might fire slightly after browser close)
+      setTimeout(() => {
+        subscription.remove();
+        reject(new AuthError('LOGIN_CANCELLED', 'Login was cancelled'));
+      }, 3000);
+    } catch (err) {
+      subscription.remove();
+      reject(new AuthError('BROWSER_ERROR', `Browser error: ${err}`));
     }
-
-    const parsed: AuthCallbackResponse = JSON.parse(decodeURIComponent(hashData));
-    await storeTokens(parsed.tokens);
-    return parsed;
-  }
-
-  const parsed: AuthCallbackResponse = JSON.parse(decodeURIComponent(responseData));
-  await storeTokens(parsed.tokens);
-  return parsed;
+  });
 }
 
 /**
  * Refresh the access token using the stored refresh token.
- * Returns the new tokens or null if refresh failed.
  */
 export async function refreshAccessToken(): Promise<AuthTokens | null> {
   const refreshToken = await getRefreshToken();
-  if (!refreshToken) {
-    return null;
-  }
+  if (!refreshToken) return null;
 
   try {
     const response = await fetch(`${Config.API_URL}/auth/refresh`, {
@@ -137,10 +140,7 @@ export async function refreshAccessToken(): Promise<AuthTokens | null> {
     });
 
     if (!response.ok) {
-      // Refresh token invalid/expired — clear tokens
-      if (response.status === 401) {
-        await clearTokens();
-      }
+      if (response.status === 401) await clearTokens();
       return null;
     }
 
@@ -167,7 +167,6 @@ export async function logout(): Promise<void> {
         body: JSON.stringify({ refresh_token: refreshToken }),
       });
     } catch {
-      // Best-effort server logout — always clear local tokens
       console.warn('[auth] Server logout failed, clearing local tokens');
     }
   }
