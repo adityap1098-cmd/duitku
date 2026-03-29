@@ -86,9 +86,11 @@ function createMockDB(initialUsers: MockRow[] = []) {
             return (found ?? null) as T | null;
           }
 
-          // SELECT * FROM sync_logs WHERE id = ?
+          // SELECT * FROM sync_logs WHERE id = ? AND user_id = ?
           if (sqlLower.includes('sync_logs') && sqlLower.includes('where id')) {
-            const found = syncLogs.find((r) => r.id === bindings[0]);
+            const found = syncLogs.find(
+              (r) => r.id === bindings[0] && (bindings.length < 2 || r.user_id === bindings[1])
+            );
             return (found ?? null) as T | null;
           }
 
@@ -499,7 +501,11 @@ describe('syncUserEmails', () => {
 
 describe('syncAllUsers', () => {
   let db: ReturnType<typeof createMockDB>;
-  const mockKV = {} as KVNamespace;
+  const mockKV = {
+    get: vi.fn().mockResolvedValue(null),
+    put: vi.fn().mockResolvedValue(undefined),
+    delete: vi.fn().mockResolvedValue(undefined),
+  } as unknown as KVNamespace;
 
   beforeEach(() => {
     vi.clearAllMocks();

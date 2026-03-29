@@ -36,7 +36,7 @@ export default function AuthCallbackScreen() {
         }
 
         if (params.data) {
-          console.log('[auth/callback] Got auth data, processing...');
+          
           const parsed: AuthCallbackResponse = JSON.parse(decodeURIComponent(params.data));
 
           // Store tokens
@@ -50,13 +50,13 @@ export default function AuthCallbackScreen() {
             error: null,
           });
 
-          console.log('[auth/callback] Login complete, redirecting to home');
+          
           router.replace('/(tabs)/home' as never);
           return;
         }
 
         // No data, no error — shouldn't happen
-        console.warn('[auth/callback] No data or error in callback');
+        
         router.replace('/(auth)/login' as never);
       } catch (err) {
         console.error('[auth/callback] Failed to process:', err);

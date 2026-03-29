@@ -25,6 +25,14 @@ const VALID_CATEGORIES: string[] = DEFAULT_CATEGORIES.map((c) => c.id);
 /** Max amount: ~1 trillion Rp (prevents integer overflow in aggregations) */
 const MAX_AMOUNT = 999_999_999_999;
 
+/** Max search query length to prevent DoS via oversized LIKE patterns */
+const MAX_SEARCH_LENGTH = 200;
+
+/** Escape LIKE wildcards in user input */
+function escapeLike(input: string): string {
+  return input.replace(/[%_]/g, '\\$&');
+}
+
 function validateAmount(amount: unknown): number {
   if (typeof amount !== 'number' || !Number.isFinite(amount)) {
     throw Errors.VALIDATION('Amount must be a number');
@@ -112,8 +120,9 @@ export async function list(
   }
 
   if (filter.search) {
-    conditions.push('(description LIKE ? OR notes LIKE ?)');
-    const searchPattern = `%${filter.search}%`;
+    const trimmed = filter.search.slice(0, MAX_SEARCH_LENGTH);
+    conditions.push("(description LIKE ? ESCAPE '\\' OR notes LIKE ? ESCAPE '\\')");
+    const searchPattern = `%${escapeLike(trimmed)}%`;
     params.push(searchPattern, searchPattern);
   }
 
@@ -348,8 +357,9 @@ export async function getSummary(
   }
 
   if (filter.search) {
-    conditions.push('(description LIKE ? OR notes LIKE ?)');
-    const searchPattern = `%${filter.search}%`;
+    const trimmed = filter.search.slice(0, MAX_SEARCH_LENGTH);
+    conditions.push("(description LIKE ? ESCAPE '\\' OR notes LIKE ? ESCAPE '\\')");
+    const searchPattern = `%${escapeLike(trimmed)}%`;
     params.push(searchPattern, searchPattern);
   }
 

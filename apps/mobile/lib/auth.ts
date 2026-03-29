@@ -62,17 +62,21 @@ export async function clearTokens(): Promise<void> {
  */
 export async function login(): Promise<AuthCallbackResponse> {
   return new Promise<AuthCallbackResponse>(async (resolve, reject) => {
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+    let settled = false;
+
     // Build the return URI for the app
     const returnUri = AuthSession.makeRedirectUri({
       scheme: Config.SCHEME,
       path: 'auth/callback',
     });
 
-    console.log('[auth] returnUri:', returnUri);
-
     // Listen for the deep link redirect
     const handleRedirect = async (event: { url: string }) => {
-      console.log('[auth] Deep link received:', event.url);
+      if (settled) return;
+      settled = true;
+      if (timeoutId) clearTimeout(timeoutId);
+      subscription.remove();
 
       try {
         const url = new URL(event.url);
@@ -104,23 +108,25 @@ export async function login(): Promise<AuthCallbackResponse> {
       const state = encodeURIComponent(returnUri);
       const authUrl = `${Config.API_URL}/auth/google?state=${state}`;
 
-      console.log('[auth] Opening:', authUrl);
-
-      // Open browser — don't wait for specific redirect URL matching,
-      // the Linking event listener handles the deep link capture
       const result = await WebBrowser.openBrowserAsync(authUrl);
-
-      console.log('[auth] Browser closed, type:', result.type);
 
       // If browser was dismissed without redirect, reject after a short delay
       // (the deep link handler might fire slightly after browser close)
-      setTimeout(() => {
-        subscription.remove();
-        reject(new AuthError('LOGIN_CANCELLED', 'Login was cancelled'));
-      }, 3000);
+      if (!settled) {
+        timeoutId = setTimeout(() => {
+          if (!settled) {
+            settled = true;
+            subscription.remove();
+            reject(new AuthError('LOGIN_CANCELLED', 'Login was cancelled'));
+          }
+        }, 3000);
+      }
     } catch (err) {
-      subscription.remove();
-      reject(new AuthError('BROWSER_ERROR', `Browser error: ${err}`));
+      if (!settled) {
+        settled = true;
+        subscription.remove();
+        reject(new AuthError('BROWSER_ERROR', `Browser error: ${err}`));
+      }
     }
   });
 }
@@ -147,8 +153,7 @@ export async function refreshAccessToken(): Promise<AuthTokens | null> {
     const data = await response.json() as { tokens: AuthTokens };
     await storeTokens(data.tokens);
     return data.tokens;
-  } catch (error) {
-    console.error('[auth] Token refresh failed:', error);
+  } catch {
     return null;
   }
 }
@@ -167,7 +172,7 @@ export async function logout(): Promise<void> {
         body: JSON.stringify({ refresh_token: refreshToken }),
       });
     } catch {
-      console.warn('[auth] Server logout failed, clearing local tokens');
+      // Server logout failed — clear local tokens anyway
     }
   }
 

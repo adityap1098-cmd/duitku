@@ -75,6 +75,16 @@ function RootLayoutInner() {
     initNotifications();
   }, []);
 
+  // Verify stored tokens are still valid on app launch
+  useEffect(() => {
+    if (!isLoading) {
+      const { restoreSession, isAuthenticated } = useAuthStore.getState();
+      if (isAuthenticated) {
+        restoreSession();
+      }
+    }
+  }, [isLoading]);
+
   // Listen for app state changes to trigger biometric lock
   useEffect(() => {
     const subscription = AppState.addEventListener('change', (nextState) => {

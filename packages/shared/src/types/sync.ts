@@ -30,9 +30,8 @@ export interface SyncLog {
 
 /** API response when triggering a sync */
 export interface SyncTriggerResponse {
-  sync_id: string;
-  status: SyncStatus;
-  message: string;
+  success: boolean;
+  data: SyncLog;
 }
 
 /** Input to email parsers — extracted from Gmail message */

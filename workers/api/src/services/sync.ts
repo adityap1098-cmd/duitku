@@ -75,6 +75,7 @@ async function createSyncLog(
 async function updateSyncLog(
   db: D1Database,
   syncLogId: string,
+  userId: string,
   update: {
     status: SyncStatus;
     emails_found: number;
@@ -90,7 +91,7 @@ async function updateSyncLog(
       `UPDATE sync_logs
        SET status = ?, emails_found = ?, emails_parsed = ?, transactions_created = ?,
            error_message = ?, completed_at = ?
-       WHERE id = ?`
+       WHERE id = ? AND user_id = ?`
     )
     .bind(
       update.status,
@@ -99,7 +100,8 @@ async function updateSyncLog(
       update.transactions_created,
       update.error_message ?? null,
       now,
-      syncLogId
+      syncLogId,
+      userId
     )
     .run();
 }
@@ -184,7 +186,7 @@ export async function syncUserEmails(
       refreshToken = await decrypt(encryptedRefreshToken, encryptionKey);
     } catch (err) {
       const msg = `Token decryption failed: ${err instanceof Error ? err.message : 'unknown'}`;
-      await updateSyncLog(db, syncLogId, {
+      await updateSyncLog(db, syncLogId, userId, {
         status: 'failed',
         emails_found: 0,
         emails_parsed: 0,
@@ -203,7 +205,7 @@ export async function syncUserEmails(
       const msg = isRevoked
         ? 'Gmail access revoked by user'
         : `Token refresh failed: ${err instanceof Error ? err.message : 'unknown'}`;
-      await updateSyncLog(db, syncLogId, {
+      await updateSyncLog(db, syncLogId, userId, {
         status: 'failed',
         emails_found: 0,
         emails_parsed: 0,
@@ -282,7 +284,7 @@ export async function syncUserEmails(
     }
 
     // 5. Mark sync complete
-    await updateSyncLog(db, syncLogId, {
+    await updateSyncLog(db, syncLogId, userId, {
       status: 'completed',
       emails_found: emailsFound,
       emails_parsed: emailsParsed,
@@ -292,7 +294,7 @@ export async function syncUserEmails(
     // Top-level catch — infrastructure failures
     const msg = err instanceof Error ? err.message : 'Unknown sync error';
     console.error(`[sync] Sync failed for user ${userId}:`, msg);
-    await updateSyncLog(db, syncLogId, {
+    await updateSyncLog(db, syncLogId, userId, {
       status: 'failed',
       emails_found: emailsFound,
       emails_parsed: emailsParsed,
@@ -327,6 +329,15 @@ export async function syncAllUsers(
   let usersFailed = 0;
 
   for (const user of users) {
+    // Per-user sync lock — same as manual trigger
+    const lockKey = `sync:lock:${user.id}`;
+    const existingLock = await kv.get(lockKey);
+    if (existingLock) {
+      console.log(`[cron-sync] Skipping user ${user.id} — sync already running`);
+      continue;
+    }
+    await kv.put(lockKey, new Date().toISOString(), { expirationTtl: 300 });
+
     try {
       const syncLog = await syncUserEmails(
         db,
@@ -349,6 +360,8 @@ export async function syncAllUsers(
         `[cron-sync] Failed for user ${user.id}:`,
         err instanceof Error ? err.message : err
       );
+    } finally {
+      await kv.delete(lockKey);
     }
   }
 
@@ -383,7 +396,7 @@ export async function triggerSync(
   if (!user?.gmail_refresh_token) {
     // Create a failed sync log for clarity
     const syncLogId = await createSyncLog(db, userId, 'failed');
-    await updateSyncLog(db, syncLogId, {
+    await updateSyncLog(db, syncLogId, userId, {
       status: 'failed',
       emails_found: 0,
       emails_parsed: 0,
