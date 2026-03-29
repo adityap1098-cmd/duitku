@@ -293,6 +293,22 @@ export async function syncUserEmails(
 
         // Create transaction
         try {
+          // Dedup check — prevent duplicate transactions from overlapping syncs
+          const existing = await db
+            .prepare(
+              `SELECT id FROM transactions
+               WHERE user_id = ? AND amount = ? AND description = ? AND date = ?
+               LIMIT 1`
+            )
+            .bind(userId, parsed.amount, parsed.description, parsed.date)
+            .first();
+
+          if (existing) {
+            console.log(`[sync] Message ${msgRef.id} | SKIP: duplicate transaction (${parsed.description} ${parsed.amount})`);
+            await markEmailProcessed(db, userId, msgRef.id);
+            continue;
+          }
+
           await transactionService.create(db, userId, {
             type: parsed.type,
             amount: parsed.amount,
