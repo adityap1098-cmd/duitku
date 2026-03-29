@@ -234,8 +234,9 @@ export async function syncUserEmails(
     }
 
     // 3. Build query and list messages
-    const lastSyncDate = await getLastSyncDate(db, userId);
-    const query = buildGmailQuery(lastSyncDate);
+    // No date filter — rely on processed_emails dedup to skip already-seen emails.
+    // This ensures historical emails from newly-added parsers are always fetched.
+    const query = buildGmailQuery();
     console.log(`[sync] User ${userId} | Gmail query: ${query}`);
 
     const messages = await listGmailMessages(accessToken, query, 20);
