@@ -125,6 +125,14 @@ export async function verifyJWT(
   }
 
   const [headerB64, payloadB64, signatureB64] = parts;
+
+  // Validate algorithm — prevent algorithm confusion attacks
+  const headerJson = textDecode(base64UrlDecode(headerB64));
+  const header = JSON.parse(headerJson) as { alg?: string; typ?: string };
+  if (header.alg !== 'HS256') {
+    throw new Error(`Unsupported JWT algorithm: ${header.alg}`);
+  }
+
   const unsigned = `${headerB64}.${payloadB64}`;
 
   // Verify signature
