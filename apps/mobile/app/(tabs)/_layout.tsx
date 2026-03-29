@@ -98,6 +98,12 @@ export default function TabLayout() {
               </View>
             ),
           }}
+          listeners={({ navigation }) => ({
+            tabPress: (e) => {
+              // Pop to the transactions index when tab is re-pressed
+              navigation.navigate('transactions', { screen: 'index' });
+            },
+          })}
         />
 
         {/* Placeholder for FAB spacing */}
