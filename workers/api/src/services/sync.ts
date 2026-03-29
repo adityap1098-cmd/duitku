@@ -236,37 +236,52 @@ export async function syncUserEmails(
     // 3. Build query and list messages
     const lastSyncDate = await getLastSyncDate(db, userId);
     const query = buildGmailQuery(lastSyncDate);
-    const messages = await listGmailMessages(accessToken, query, 50);
+    console.log(`[sync] User ${userId} | Gmail query: ${query}`);
+
+    const messages = await listGmailMessages(accessToken, query, 20);
     emailsFound = messages.length;
+    console.log(`[sync] User ${userId} | Emails found: ${emailsFound}`);
 
     // 4. Process each message: dedup → fetch → parse → create transaction
     for (const msgRef of messages) {
       try {
         // Dedup check
         const alreadyProcessed = await isEmailProcessed(db, userId, msgRef.id);
-        if (alreadyProcessed) continue;
+        if (alreadyProcessed) {
+          console.log(`[sync] Message ${msgRef.id} | SKIP: already processed`);
+          continue;
+        }
 
         // Fetch full message
         const email = await getGmailMessage(accessToken, msgRef.id);
         if (!email) {
+          console.log(`[sync] Message ${msgRef.id} | SKIP: fetch returned null`);
           // Mark as processed to avoid re-fetching unfetchable messages
           await markEmailProcessed(db, userId, msgRef.id);
           continue;
         }
 
+        console.log(`[sync] Message ${msgRef.id} | From: ${email.from} | Subject: ${email.subject?.slice(0, 60)}`);
+
         // Find matching parser
         const parser = findParserForEmail(email.from);
         if (!parser) {
+          console.log(`[sync] Message ${msgRef.id} | SKIP: no parser matched for sender "${email.from}"`);
           await markEmailProcessed(db, userId, msgRef.id);
           continue;
         }
 
+        console.log(`[sync] Message ${msgRef.id} | Parser: ${parser.platform}`);
+
         // Parse email
         const parsed: ParsedTransaction | null = parser.parse(email);
         if (!parsed) {
+          console.log(`[sync] Message ${msgRef.id} | SKIP: parser returned null (no amount or unrecognized format)`);
           await markEmailProcessed(db, userId, msgRef.id);
           continue;
         }
+
+        console.log(`[sync] Message ${msgRef.id} | Parsed: ${parsed.type} ${parsed.amount} ${parsed.category} "${parsed.description?.slice(0, 40)}"`);
 
         emailsParsed++;
 
@@ -283,8 +298,10 @@ export async function syncUserEmails(
             notes: parsed.originalSnippet,
           });
           transactionsCreated++;
+          console.log(`[sync] Message ${msgRef.id} | ✅ Transaction created: ${parsed.platform} ${parsed.amount}`);
         } catch (err) {
           // Log but continue — one bad transaction shouldn't block others
+          console.error(`[sync] Message ${msgRef.id} | ❌ Failed to create transaction:`, err instanceof Error ? err.message : err);
           console.error(
             `[sync] Failed to create transaction for message ${msgRef.id}:`,
             err instanceof Error ? err.message : err
@@ -303,6 +320,7 @@ export async function syncUserEmails(
     }
 
     // 5. Mark sync complete
+    console.log(`[sync] User ${userId} | DONE: found=${emailsFound} parsed=${emailsParsed} created=${transactionsCreated}`);
     await updateSyncLog(db, syncLogId, userId, {
       status: 'completed',
       emails_found: emailsFound,

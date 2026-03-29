@@ -27,9 +27,15 @@ function extractAmount(body: string): number | null {
 
 /** Detect transaction type from keywords */
 function detectType(text: string): 'income' | 'expense' {
-  const incomeKeywords = /(?:kredit|credit|masuk|penerimaan|terima|received|incoming)/i;
+  // Expense keywords — check first (more specific)
+  const expenseKeywords = /(?:membayar|bayar|pembayaran|belanja|beli|purchase|debet|debit|keluar|pengeluaran|transfer keluar|melakukan transfer)/i;
+  if (expenseKeywords.test(text)) return 'expense';
+
+  // Income keywords
+  const incomeKeywords = /(?:menerima|terima|received|incoming|masuk|penerimaan|kredit|credit|gajian|salary)/i;
   if (incomeKeywords.test(text)) return 'income';
-  return 'expense';
+
+  return 'expense'; // default to expense
 }
 
 /** Detect category from keywords */

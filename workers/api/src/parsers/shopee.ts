@@ -47,6 +47,7 @@ export const shopeeParser: EmailParser = {
   senderPatterns: [
     /no-?reply@shopee\.co\.id/i,
     /.*@mail\.shopee\.co\.id/i,
+    /.*@newsletter\.shopee\.co\.id/i,
   ],
 
   parse(email: EmailInput): ParsedTransaction | null {
