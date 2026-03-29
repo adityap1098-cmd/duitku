@@ -5,7 +5,7 @@
 
 import type { EmailInput, ParsedTransaction } from '@duitku/shared';
 import type { EmailParser } from './_template';
-import { parseRupiahAmount, truncateSnippet, extractDate } from './_template';
+import { parseRupiahAmount, truncateSnippet, extractDate, detectCategoryFromText } from './_template';
 
 /** Amount extraction patterns for Jago — most specific first */
 const AMOUNT_PATTERNS: RegExp[] = [
@@ -38,15 +38,7 @@ function detectType(text: string): 'income' | 'expense' {
   return 'expense'; // default to expense
 }
 
-/** Detect category from keywords */
-function detectCategory(text: string): string {
-  if (/transfer|kirim|send/i.test(text)) return 'transfer';
-  if (/tagihan|billing|listrik|pln|pdam|bpjs/i.test(text)) return 'bills';
-  if (/top\s*up|topup|pulsa|data/i.test(text)) return 'topup';
-  if (/belanja|shop|beli|purchase/i.test(text)) return 'shopping';
-  return 'other';
-}
-
+/** Detect category from merchant name or keywords */
 export const jagoParser: EmailParser = {
   platform: 'jago',
   displayName: 'Bank Jago',
@@ -77,7 +69,7 @@ export const jagoParser: EmailParser = {
     if (amount === null) return null;
 
     const type = detectType(fullText);
-    const category = type === 'income' ? 'transfer' : detectCategory(fullText);
+    const category = type === 'income' ? 'transfer' : detectCategoryFromText(fullText);
 
     const description = `Jago: ${subject.slice(0, 80)}`;
 

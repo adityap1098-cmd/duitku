@@ -426,9 +426,9 @@ describe('syncUserEmails', () => {
 
     expect(result.status).toBe('completed');
     expect(result.emails_found).toBe(2);
-    // The unknown email is skipped, the gojek email is processed
-    // Both are marked as processed
-    expect(db._processedEmails).toHaveLength(2);
+    // The unknown email is skipped (NOT marked processed — allows re-evaluation)
+    // Only the gojek email (successfully parsed + created) is marked processed
+    expect(db._processedEmails).toHaveLength(1);
   });
 
   it('empty inbox: sync completes with 0 counts', async () => {

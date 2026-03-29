@@ -88,3 +88,44 @@ export function extractDate(dateStr: string): string {
 
   return d.toISOString().slice(0, 10);
 }
+
+/**
+ * Smart category detection from transaction text (subject + body + merchant name).
+ * Matches against known Indonesian merchants, services, and keywords.
+ * Used by bank parsers (Jago, SeaBank, Mandiri, BCA, BNI) for auto-categorization.
+ */
+export function detectCategoryFromText(text: string): CategoryHint {
+  const lower = text.toLowerCase();
+
+  // Food & beverage — check first (common in daily transactions)
+  if (/mcdonald|kfc|burger king|pizza hut|starbucks|chatime|gofood|grabfood|fore coffee|janji jiwa|kenangan|hokben|yoshinoya|solaria|warung|restoran|restaurant|cafe|kedai|kopi|bakso|mie ayam|nasi|sate|martabak|ayam geprek|richeese|mixue|subway|domino|wendy|a&w|breadtalk|jco|dunkin|hokkaido/i.test(lower)) return 'food';
+
+  // Transport
+  if (/grab(?!food|mart)|gojek|goride|gocar|taxi|parkir|parking|tol\b|toll|transjakarta|mrt|lrt|kereta|train|bus|angkot|ojek/i.test(lower)) return 'transport';
+
+  // Shopping / e-commerce
+  if (/shopee|tokopedia|lazada|blibli|bukalapak|toko online|minimarket|indomaret|alfamart|alfamidi|supermarket|hypermart|giant|carrefour|lotte/i.test(lower)) return 'shopping';
+
+  // Bills / utilities
+  if (/biznet|indihome|telkom|firstmedia|pln|listrik|pdam|gas\b|internet|wifi|tv kabel|tagihan|portal neo|bpjs|asuransi|pajak|iuran/i.test(lower)) return 'bills';
+
+  // Top up / e-wallet
+  if (/top\s*up|topup|gopay|ovo\b|dana\b|shopeepay|linkaja|e-?wallet|pulsa|paket data/i.test(lower)) return 'topup';
+
+  // Subscription
+  if (/netflix|spotify|youtube premium|disney|hbo|apple music|google play|icloud|canva|zoom|microsoft 365|adobe|chatgpt|openai|vidio|viu/i.test(lower)) return 'subscription';
+
+  // Entertainment
+  if (/bioskop|cinema|cgv|xxi|tix id|tiket\.com|event|konser|concert|game|steam/i.test(lower)) return 'entertainment';
+
+  // Health
+  if (/apotek|pharmacy|kimia farma|k24|klinik|clinic|rumah sakit|hospital|dokter|doctor|halodoc|alodokter/i.test(lower)) return 'health';
+
+  // Education
+  if (/sekolah|school|kuliah|universitas|university|kursus|course|udemy|coursera|ruangguru|zenius|bimbel/i.test(lower)) return 'education';
+
+  // Transfer — check last (most generic)
+  if (/transfer|kirim|kiriman|pemindahan dana/i.test(lower)) return 'transfer';
+
+  return 'other';
+}

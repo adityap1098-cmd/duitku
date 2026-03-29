@@ -6,7 +6,7 @@
 import type { EmailInput, ParsedTransaction } from '@duitku/shared';
 import type { CategoryHint } from '@duitku/shared';
 import type { EmailParser } from './_template';
-import { parseRupiahAmount, truncateSnippet, extractDate } from './_template';
+import { parseRupiahAmount, truncateSnippet, extractDate, detectCategoryFromText } from './_template';
 
 /** Detect whether the transaction is a debit (expense) or credit (income) */
 function detectTransactionType(text: string): 'income' | 'expense' {
@@ -29,30 +29,6 @@ function detectTransactionType(text: string): 'income' | 'expense' {
 }
 
 /** Detect transaction category from keywords */
-function detectCategory(text: string): CategoryHint {
-  const lower = text.toLowerCase();
-
-  // Transfer
-  if (lower.includes('transfer') || lower.includes('kirim') || lower.includes('kiriman')) {
-    return 'transfer';
-  }
-
-  // Bills
-  if (
-    lower.includes('tagihan') ||
-    lower.includes('pembayaran') ||
-    lower.includes('listrik') ||
-    lower.includes('air') ||
-    lower.includes('telepon') ||
-    lower.includes('pln') ||
-    lower.includes('pdam')
-  ) {
-    return 'bills';
-  }
-
-  return 'other';
-}
-
 /** Amount extraction patterns for BNI */
 const AMOUNT_PATTERNS: RegExp[] = [
   /(?:sebesar|sejumlah|nominal|amount)\s*[:\s]*(?:Rp\.?\s*[\d.,]+)/i,
@@ -89,7 +65,7 @@ export const bniParser: EmailParser = {
     const type = detectTransactionType(fullText);
 
     // Detect category
-    const category = detectCategory(fullText);
+    const category = detectCategoryFromText(fullText);
 
     // Build description
     const direction = type === 'income' ? 'Credit' : 'Debit';
