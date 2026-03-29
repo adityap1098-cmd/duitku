@@ -6,6 +6,7 @@
 import type { ApiResponse, ApiError } from '@duitku/shared';
 import { Config } from '../constants/config';
 import * as auth from './auth';
+import { apiLog, errLog } from './logger';
 
 // --------------- Types ---------------
 
@@ -65,25 +66,31 @@ async function authenticatedFetch<T>(
 
   const url = `${Config.API_URL}${path}`;
 
+  apiLog(`${method} ${path}`, body ? { body: typeof body === 'object' ? '...' : body } : undefined);
+  const startTime = Date.now();
+
   const response = await fetch(url, {
     method,
     headers: requestHeaders,
     body: body ? JSON.stringify(body) : undefined,
   });
 
+  const elapsed = Date.now() - startTime;
+  apiLog(`${method} ${path} → ${response.status} (${elapsed}ms)`);
+
   // Handle 401 — attempt token refresh
   if (response.status === 401 && !noAuth) {
+    apiLog(`${method} ${path} → 401, refreshing token...`);
     return handleUnauthorized<T>(path, options);
   }
 
   // Parse response
   if (!response.ok) {
     const errorBody = await response.json().catch(() => null) as ApiError | null;
-    throw new ApiClientError(
-      errorBody?.error?.code || 'API_ERROR',
-      errorBody?.error?.message || `Request failed: ${response.status}`,
-      response.status
-    );
+    const errCode = errorBody?.error?.code || 'API_ERROR';
+    const errMsg = errorBody?.error?.message || `Request failed: ${response.status}`;
+    errLog(`API ${method} ${path} failed`, { status: response.status, code: errCode, message: errMsg });
+    throw new ApiClientError(errCode, errMsg, response.status);
   }
 
   // Handle 204 No Content

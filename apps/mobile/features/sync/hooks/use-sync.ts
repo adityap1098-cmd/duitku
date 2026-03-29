@@ -5,6 +5,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { get, post } from '../../../lib/api-client';
 import { transactionKeys } from '../../transactions/hooks/use-transactions';
+import { syncLog as logSync, errLog } from '../../../lib/logger';
 import type { SyncLog, SyncTriggerResponse } from '@duitku/shared';
 
 /** Query key factory for sync queries */
@@ -34,10 +35,17 @@ export function useTriggerSync() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: () => post<SyncTriggerResponse>('/sync/trigger'),
-    onSuccess: () => {
+    mutationFn: () => {
+      logSync('Triggering manual sync...');
+      return post<SyncTriggerResponse>('/sync/trigger');
+    },
+    onSuccess: (data) => {
+      logSync('Sync complete', { status: data?.data?.status, created: data?.data?.transactions_created });
       queryClient.invalidateQueries({ queryKey: syncKeys.status() });
       queryClient.invalidateQueries({ queryKey: transactionKeys.lists() });
+    },
+    onError: (err) => {
+      errLog('Sync failed', { message: err instanceof Error ? err.message : String(err) });
     },
   });
 }

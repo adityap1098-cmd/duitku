@@ -5,6 +5,7 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useTheme } from '../../contexts/theme-context';
 import { lightImpact, mediumImpact } from '../../lib/haptics';
 import { LinearGradient } from 'expo-linear-gradient';
+import { tapLog, navLog } from '../../lib/logger';
 
 /**
  * Custom FAB button for the center tab.
@@ -70,8 +71,13 @@ export default function TabLayout() {
         }}
         screenListeners={{
           state: (e) => {
-            // Trigger light haptic on tab change
             lightImpact();
+            // Log which tab was selected
+            const state = e.data?.state;
+            if (state) {
+              const route = state.routes?.[state.index];
+              tapLog(`Tab: ${route?.name ?? 'unknown'}`);
+            }
           },
         }}
       >

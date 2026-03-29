@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { Stack, useRouter, useSegments } from 'expo-router';
+import { Stack, useRouter, useSegments, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { View, ActivityIndicator, StyleSheet, AppState, type AppStateStatus } from 'react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -30,6 +30,7 @@ import { useSettingsStore } from '../stores/settings-store';
 import { initNotifications } from '../lib/notifications';
 import { ThemeProvider, useTheme } from '../contexts/theme-context';
 import { BiometricLock } from '../components/biometric-lock';
+import { navLog, authLog } from '../lib/logger';
 
 // Prevent splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync();
@@ -66,14 +67,22 @@ function useProtectedRoute(isLoaded: boolean) {
     const inAuthGroup = segments[0] === '(auth)';
     const inOnboardingGroup = segments[0] === '(onboarding)';
 
+    navLog('Auth guard check', {
+      isAuthenticated,
+      hasSeenOnboarding,
+      segments: segments.join('/'),
+      inAuthGroup,
+      inOnboardingGroup,
+    });
+
     if (!isAuthenticated && !hasSeenOnboarding && !inOnboardingGroup) {
-      // First launch — show onboarding before login
+      navLog('→ Redirect to onboarding');
       router.replace('/(onboarding)' as never);
     } else if (!isAuthenticated && hasSeenOnboarding && !inAuthGroup) {
-      // Returning user who's seen onboarding — go to login
+      navLog('→ Redirect to login');
       router.replace('/(auth)/login' as never);
     } else if (isAuthenticated && (inAuthGroup || inOnboardingGroup)) {
-      // Authenticated but on login/onboarding → redirect to home
+      navLog('→ Redirect to home (authenticated)');
       router.replace('/(tabs)/home' as never);
     }
   }, [isAuthenticated, isLoading, isLoaded, hasSeenOnboarding, segments, router]);
@@ -110,6 +119,12 @@ function RootLayoutInner() {
   const isLoaded = fontsLoaded || !!fontError;
 
   useProtectedRoute(isLoaded);
+
+  // Log every screen change
+  const pathname = usePathname();
+  useEffect(() => {
+    navLog(`Screen: ${pathname}`);
+  }, [pathname]);
 
   useEffect(() => {
     if (isLoaded && !authLoading) {

@@ -9,6 +9,7 @@ import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTheme } from '../../../contexts/theme-context';
 import { formatRupiah } from '../../../lib/format';
+import { tapLog } from '../../../lib/logger';
 import { DEFAULT_CATEGORIES } from '@duitku/shared';
 import { getAmountColor } from '../../../constants/theme';
 import type { Transaction } from '@duitku/shared';
@@ -68,6 +69,7 @@ export default function TransactionCard({ transaction }: TransactionCardProps) {
   );
 
   const handlePress = () => {
+    tapLog(`TransactionCard → [id]`, { id: transaction.id, amount: transaction.amount, category: transaction.category });
     lightImpact();
     router.push({
       pathname: '/(tabs)/transactions/[id]',
