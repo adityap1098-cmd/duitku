@@ -7,6 +7,7 @@ import { get } from '../../../lib/api-client';
 import type {
   Transaction,
   TransactionFilter,
+  TransactionSummary,
   PaginatedResponse,
 } from '@duitku/shared';
 
@@ -51,6 +52,20 @@ export function useTransactions(filter: TransactionFilter = {}) {
     queryFn: () =>
       get<PaginatedResponse<Transaction>>(
         `/transactions${buildQueryString(filter)}`
+      ),
+  });
+}
+
+/**
+ * Fetch transaction summary (income/expense totals).
+ * Optionally filtered by date range or category.
+ */
+export function useTransactionSummary(filter: TransactionFilter = {}) {
+  return useQuery({
+    queryKey: [...transactionKeys.all, 'summary', filter] as const,
+    queryFn: () =>
+      get<{ success: boolean; data: TransactionSummary }>(
+        `/transactions/summary${buildQueryString(filter)}`
       ),
   });
 }

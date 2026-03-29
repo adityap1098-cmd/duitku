@@ -141,6 +141,8 @@ function createStyles(Colors: ColorPalette, Typography: TypographySet, Spacing: 
       backgroundColor: Colors.surface,
       borderRadius: BorderRadius.lg,
       padding: Spacing.md,
+      borderWidth: 1,
+      borderColor: Colors.border,
     },
     summaryRow: {
       flexDirection: 'row',
@@ -183,6 +185,8 @@ function createStyles(Colors: ColorPalette, Typography: TypographySet, Spacing: 
       backgroundColor: Colors.surface,
       borderRadius: BorderRadius.lg,
       padding: Spacing.md,
+      borderWidth: 1,
+      borderColor: Colors.border,
     },
     sectionTitle: {
       ...Typography.caption,
@@ -221,6 +225,8 @@ function createStyles(Colors: ColorPalette, Typography: TypographySet, Spacing: 
       borderRadius: BorderRadius.lg,
       padding: Spacing.xl,
       alignItems: 'center',
+      borderWidth: 1,
+      borderColor: Colors.border,
     },
     emptyIcon: {
       fontSize: 48,

@@ -159,6 +159,8 @@ function createStyles(Colors: ColorPalette, Typography: TypographySet, Spacing: 
       backgroundColor: Colors.surface,
       borderRadius: BorderRadius.md,
       padding: Spacing.md,
+      borderWidth: 1,
+      borderColor: Colors.border,
     },
     containerCompact: {
       padding: Spacing.sm,
@@ -221,6 +223,8 @@ function createStyles(Colors: ColorPalette, Typography: TypographySet, Spacing: 
       borderRadius: BorderRadius.sm,
       paddingHorizontal: Spacing.sm,
       paddingVertical: Spacing.xs,
+      borderWidth: 1,
+      borderColor: Colors.border,
     },
     compactIcon: {
       fontSize: 14,
@@ -231,8 +235,8 @@ function createStyles(Colors: ColorPalette, Typography: TypographySet, Spacing: 
     },
     syncButton: {
       backgroundColor: Colors.primary,
-      borderRadius: BorderRadius.sm,
-      paddingVertical: Spacing.sm,
+      borderRadius: BorderRadius.md,
+      paddingVertical: 14,
       alignItems: 'center',
     },
     syncButtonPressed: {
@@ -243,7 +247,7 @@ function createStyles(Colors: ColorPalette, Typography: TypographySet, Spacing: 
     },
     syncButtonText: {
       ...Typography.body,
-      color: Colors.text,
+      color: Colors.background,
       fontWeight: '600',
     },
   });

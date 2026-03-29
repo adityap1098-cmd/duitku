@@ -10,6 +10,7 @@ import { useRouter } from 'expo-router';
 import { useTheme } from '../../../contexts/theme-context';
 import { formatRupiah } from '../../../lib/format';
 import { DEFAULT_CATEGORIES } from '@duitku/shared';
+import { getAmountColor } from '../../../constants/theme';
 import type { Transaction } from '@duitku/shared';
 import type { ColorPalette, TypographySet } from '../../../constants/theme';
 
@@ -45,7 +46,11 @@ export default function TransactionCard({ transaction }: TransactionCardProps) {
   const styles = useMemo(() => createStyles(Colors, Typography, Spacing, BorderRadius), [Colors, Typography, Spacing, BorderRadius]);
   const category = getCategoryDisplay(transaction.category);
   const isIncome = transaction.type === 'income';
-
+  const amountColor = getAmountColor(
+    Colors,
+    transaction.amount,
+    transaction.type as 'expense' | 'income',
+  );
   return (
     <Pressable
       style={({ pressed }) => [
@@ -78,12 +83,23 @@ export default function TransactionCard({ transaction }: TransactionCardProps) {
         <Text
           style={[
             styles.amount,
-            { color: isIncome ? Colors.income : Colors.expense },
+            { color: amountColor },
           ]}
         >
           {isIncome ? '+' : '-'} {formatRupiah(transaction.amount)}
         </Text>
-        <Text style={styles.date}>{formatDate(transaction.date)}</Text>
+        <View style={styles.badgeRow}>
+          {transaction.source === 'sync' ? (
+            <View style={[styles.badge, { backgroundColor: Colors.accentDim }]}>
+              <Text style={[styles.badgeText, { color: Colors.accent }]}>Synced</Text>
+            </View>
+          ) : (
+            <View style={[styles.badge, { backgroundColor: Colors.blueDim }]}>
+              <Text style={[styles.badgeText, { color: Colors.blue }]}>Manual</Text>
+            </View>
+          )}
+          <Text style={styles.date}>{formatDate(transaction.date)}</Text>
+        </View>
       </View>
     </Pressable>
   );
@@ -98,14 +114,16 @@ function createStyles(Colors: ColorPalette, Typography: TypographySet, Spacing: 
       borderRadius: BorderRadius.md,
       padding: Spacing.md,
       marginBottom: Spacing.sm,
+      borderWidth: 1,
+      borderColor: Colors.border,
     },
     pressed: {
       backgroundColor: Colors.surfaceLight,
     },
     iconContainer: {
-      width: 44,
-      height: 44,
-      borderRadius: BorderRadius.sm,
+      width: 42,
+      height: 42,
+      borderRadius: BorderRadius.md,
       backgroundColor: Colors.surfaceLight,
       justifyContent: 'center',
       alignItems: 'center',
@@ -131,12 +149,24 @@ function createStyles(Colors: ColorPalette, Typography: TypographySet, Spacing: 
       alignItems: 'flex-end',
     },
     amount: {
-      fontSize: 16,
-      fontWeight: '600',
-      marginBottom: 2,
+      ...Typography.amount,
+      marginBottom: 4,
+    },
+    badgeRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.xs,
+    },
+    badge: {
+      paddingHorizontal: 6,
+      paddingVertical: 2,
+      borderRadius: 4,
+    },
+    badgeText: {
+      ...Typography.badge,
     },
     date: {
-      ...Typography.label,
+      ...Typography.xs,
     },
   });
 }

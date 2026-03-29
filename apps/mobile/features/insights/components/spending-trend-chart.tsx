@@ -114,6 +114,8 @@ function createStyles(Colors: ColorPalette, Typography: TypographySet, Spacing: 
       padding: Spacing.md,
       paddingRight: Spacing.xs,
       overflow: 'hidden',
+      borderWidth: 1,
+      borderColor: Colors.border,
     },
     axisLabel: {
       color: Colors.textMuted,
@@ -135,6 +137,8 @@ function createStyles(Colors: ColorPalette, Typography: TypographySet, Spacing: 
       borderRadius: BorderRadius.lg,
       padding: Spacing.xl,
       alignItems: 'center',
+      borderWidth: 1,
+      borderColor: Colors.border,
     },
     emptyIcon: {
       fontSize: 48,

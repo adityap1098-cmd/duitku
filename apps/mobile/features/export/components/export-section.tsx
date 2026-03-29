@@ -151,6 +151,8 @@ function createStyles(Colors: ColorPalette, Typography: TypographySet, Spacing: 
       backgroundColor: Colors.surface,
       borderRadius: BorderRadius.md,
       padding: Spacing.md,
+      borderWidth: 1,
+      borderColor: Colors.border,
     },
     header: {
       marginBottom: Spacing.sm,
