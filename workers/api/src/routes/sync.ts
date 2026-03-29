@@ -21,6 +21,11 @@ sync.use('*', authMiddleware);
 sync.post('/trigger', async (c) => {
   const userId = c.get('userId');
 
+  // Optional date range from request body
+  const body = await c.req.json<{ after?: string; before?: string }>().catch(() => ({}));
+  const afterDate = body.after; // YYYY-MM-DD
+  const beforeDate = body.before; // YYYY-MM-DD
+
   // Concurrent sync guard — prevent duplicate syncs per user
   const lockKey = `sync:lock:${userId}`;
   const existingLock = await c.env.KV.get(lockKey);
@@ -40,7 +45,9 @@ sync.post('/trigger', async (c) => {
       userId,
       c.env.ENCRYPTION_KEY,
       c.env.GOOGLE_CLIENT_ID,
-      c.env.GOOGLE_CLIENT_SECRET
+      c.env.GOOGLE_CLIENT_SECRET,
+      afterDate,
+      beforeDate
     );
 
     return c.json({

@@ -35,9 +35,9 @@ export function useTriggerSync() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: () => {
-      logSync('Triggering manual sync...');
-      return post<SyncTriggerResponse>('/sync/trigger');
+    mutationFn: (params?: { after?: string; before?: string }) => {
+      logSync('Triggering sync...', params ?? {});
+      return post<SyncTriggerResponse>('/sync/trigger', params);
     },
     onSuccess: (data) => {
       logSync('Sync complete', { status: data?.data?.status, created: data?.data?.transactions_created });

@@ -1,20 +1,69 @@
 /**
- * SyncStatus — shows Gmail sync state, last sync time, result counts, and a manual sync button.
- * Supports compact mode (just icon + time) for the home screen.
+ * SyncStatus — Gmail sync with month range picker.
+ * Supports compact mode (icon + time) for home screen,
+ * and full mode with month range selector for sync tab.
  */
 
-import { useMemo } from 'react';
-import { View, Text, StyleSheet, Pressable, ActivityIndicator } from 'react-native';
+import { useMemo, useState, useCallback } from 'react';
+import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
 import { useTheme } from '../../../contexts/theme-context';
 import { useSyncStatus, useTriggerSync } from '../hooks/use-sync';
+import { Skeleton } from '../../../components/skeleton';
+import { mediumImpact } from '../../../lib/haptics';
 import type { ColorPalette, TypographySet } from '../../../constants/theme';
 
 interface SyncStatusProps {
-  /** When true, render only the status icon and relative time (for home screen). */
   compact?: boolean;
 }
 
-/** Return a human-readable relative time string from an ISO date. */
+const MONTH_NAMES = [
+  'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
+  'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des',
+];
+
+/** Generate list of months from N months ago to now */
+function getMonthOptions(count: number): { label: string; value: string; year: number; month: number }[] {
+  const now = new Date();
+  const options: { label: string; value: string; year: number; month: number }[] = [];
+
+  for (let i = count - 1; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const y = d.getFullYear();
+    const m = d.getMonth();
+    const pad = (n: number) => String(n).padStart(2, '0');
+    options.push({
+      label: `${MONTH_NAMES[m]} ${y}`,
+      value: `${y}-${pad(m + 1)}`,
+      year: y,
+      month: m,
+    });
+  }
+  return options;
+}
+
+/** Get first day of month as YYYY-MM-DD */
+function monthStart(value: string): string {
+  return `${value}-01`;
+}
+
+/** Get last day of month as YYYY-MM-DD */
+function monthEnd(value: string): string {
+  const [y, m] = value.split('-').map(Number);
+  const lastDay = new Date(y, m, 0).getDate();
+  return `${value}-${String(lastDay).padStart(2, '0')}`;
+}
+
+/** Status icon */
+function statusIcon(status: string): string {
+  switch (status) {
+    case 'completed': return '✅';
+    case 'failed': return '❌';
+    case 'running': return '🔄';
+    default: return '⏳';
+  }
+}
+
+/** Relative time */
 function relativeTime(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
   const seconds = Math.floor(diff / 1000);
@@ -27,20 +76,6 @@ function relativeTime(iso: string): string {
   return `${days} hari lalu`;
 }
 
-/** Map sync status to a display icon string. */
-function statusIcon(status: string): string {
-  switch (status) {
-    case 'completed':
-      return '✅';
-    case 'failed':
-      return '❌';
-    case 'running':
-      return '🔄';
-    default:
-      return '⏳';
-  }
-}
-
 export default function SyncStatus({ compact = false }: SyncStatusProps) {
   const { Colors, Typography, Spacing, BorderRadius } = useTheme();
   const styles = useMemo(() => createStyles(Colors, Typography, Spacing, BorderRadius), [Colors, Typography, Spacing, BorderRadius]);
@@ -49,17 +84,40 @@ export default function SyncStatus({ compact = false }: SyncStatusProps) {
 
   const syncLog = statusResponse?.data ?? null;
 
-  // Loading state
-  if (isLoadingStatus) {
-    return (
-      <View style={[styles.container, compact && styles.containerCompact]}>
-        <ActivityIndicator size="small" color={Colors.primary} />
-      </View>
-    );
-  }
+  // Month range state
+  const months = useMemo(() => getMonthOptions(12), []);
+  const [startIdx, setStartIdx] = useState(months.length - 1); // default: current month
+  const [endIdx, setEndIdx] = useState(months.length - 1);
 
-  // Compact mode: icon + relative time only
+  const handleMonthTap = useCallback((idx: number) => {
+    mediumImpact();
+    // If no range started, or tapping before start, set as new start
+    if (idx <= startIdx || startIdx === endIdx) {
+      setStartIdx(idx);
+      setEndIdx(idx);
+    } else {
+      // Extend range to this month
+      setEndIdx(idx);
+    }
+  }, [startIdx, endIdx]);
+
+  const handleSync = useCallback(() => {
+    mediumImpact();
+    const after = monthStart(months[startIdx].value);
+    const before = monthEnd(months[endIdx].value);
+    triggerSync.mutate({ after, before });
+  }, [startIdx, endIdx, months, triggerSync]);
+
+  const handleSyncAll = useCallback(() => {
+    mediumImpact();
+    triggerSync.mutate({});
+  }, [triggerSync]);
+
+  // Compact mode
   if (compact) {
+    if (isLoadingStatus) {
+      return <Skeleton width={150} height={24} borderRadius={8} style={{ backgroundColor: Colors.surfaceLight }} />;
+    }
     if (!syncLog) {
       return (
         <View style={styles.compactRow}>
@@ -71,83 +129,95 @@ export default function SyncStatus({ compact = false }: SyncStatusProps) {
     return (
       <View style={styles.compactRow}>
         <Text style={styles.compactIcon}>{statusIcon(syncLog.status)}</Text>
-        <Text style={styles.compactText}>
-          Sync {relativeTime(syncLog.started_at)}
-        </Text>
+        <Text style={styles.compactText}>Sync {relativeTime(syncLog.started_at)}</Text>
       </View>
     );
   }
 
-  // Full mode: detailed info + sync button
+  // Full mode with month range
+  const rangeLabel = startIdx === endIdx
+    ? months[startIdx].label
+    : `${months[startIdx].label} — ${months[endIdx].label}`;
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>📧 Gmail Sync</Text>
       </View>
 
-      {!syncLog ? (
-        <Text style={styles.emptyText}>Gmail sync belum pernah jalan</Text>
-      ) : (
-        <View style={styles.details}>
-          <View style={styles.statusRow}>
-            <Text style={styles.statusIcon}>{statusIcon(syncLog.status)}</Text>
-            <Text style={styles.statusText}>
-              {syncLog.status === 'completed'
-                ? 'Berhasil'
-                : syncLog.status === 'failed'
-                  ? 'Gagal'
-                  : 'Sedang berjalan...'}
-            </Text>
-            <Text style={styles.timeText}>
-              {relativeTime(syncLog.started_at)}
-            </Text>
-          </View>
-
-          {syncLog.status === 'failed' && syncLog.error_message && (
-            <Text style={styles.errorText}>{syncLog.error_message}</Text>
-          )}
-
-          {syncLog.status === 'completed' && (
-            <View style={styles.countsRow}>
-              <View style={styles.countItem}>
-                <Text style={styles.countValue}>{syncLog.emails_found}</Text>
-                <Text style={styles.countLabel}>Email</Text>
-              </View>
-              <View style={styles.countItem}>
-                <Text style={styles.countValue}>{syncLog.emails_parsed}</Text>
-                <Text style={styles.countLabel}>Diparse</Text>
-              </View>
-              <View style={styles.countItem}>
-                <Text style={styles.countValue}>
-                  {syncLog.transactions_created}
-                </Text>
-                <Text style={styles.countLabel}>Transaksi</Text>
-              </View>
-            </View>
-          )}
+      {/* Last sync status */}
+      {syncLog && (
+        <View style={styles.statusRow}>
+          <Text style={styles.statusIcon}>{statusIcon(syncLog.status)}</Text>
+          <Text style={styles.statusText}>
+            {syncLog.status === 'completed'
+              ? `${syncLog.transactions_created} transaksi baru`
+              : syncLog.status === 'failed' ? 'Gagal' : 'Berjalan...'}
+          </Text>
+          <Text style={styles.timeText}>{relativeTime(syncLog.started_at)}</Text>
         </View>
       )}
 
-      <Pressable
-        style={({ pressed }) => [
-          styles.syncButton,
-          pressed && styles.syncButtonPressed,
-          triggerSync.isPending && styles.syncButtonDisabled,
-        ]}
-        onPress={() => triggerSync.mutate()}
-        disabled={triggerSync.isPending}
-      >
-        {triggerSync.isPending ? (
-          <ActivityIndicator size="small" color={Colors.text} />
-        ) : (
-          <Text style={styles.syncButtonText}>Sync Sekarang</Text>
-        )}
-      </Pressable>
+      {/* Month range picker */}
+      <Text style={styles.sectionLabel}>PILIH PERIODE</Text>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.monthScroll}>
+        {months.map((m, idx) => {
+          const isInRange = idx >= startIdx && idx <= endIdx;
+          const isEdge = idx === startIdx || idx === endIdx;
+          return (
+            <Pressable
+              key={m.value}
+              onPress={() => handleMonthTap(idx)}
+              style={[
+                styles.monthPill,
+                isInRange && styles.monthPillActive,
+                isEdge && styles.monthPillEdge,
+              ]}
+            >
+              <Text style={[
+                styles.monthPillText,
+                isInRange && styles.monthPillTextActive,
+              ]}>
+                {m.label}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </ScrollView>
+
+      <Text style={styles.rangeText}>📅 {rangeLabel}</Text>
+
+      {/* Sync buttons */}
+      <View style={styles.buttonRow}>
+        <Pressable
+          style={({ pressed }) => [
+            styles.syncButton,
+            pressed && styles.syncButtonPressed,
+            triggerSync.isPending && styles.syncButtonDisabled,
+          ]}
+          onPress={handleSync}
+          disabled={triggerSync.isPending}
+        >
+          <Text style={styles.syncButtonText}>
+            {triggerSync.isPending ? 'Syncing...' : `Sync ${rangeLabel}`}
+          </Text>
+        </Pressable>
+
+        <Pressable
+          style={({ pressed }) => [
+            styles.syncAllButton,
+            pressed && styles.syncButtonPressed,
+            triggerSync.isPending && styles.syncButtonDisabled,
+          ]}
+          onPress={handleSyncAll}
+          disabled={triggerSync.isPending}
+        >
+          <Text style={styles.syncAllText}>Sync Semua</Text>
+        </Pressable>
+      </View>
 
       {triggerSync.isError && (
-        <Text style={styles.errorText}>
-          Gagal memulai sync. Coba lagi nanti.
-        </Text>
+        <Text style={styles.errorText}>Gagal memulai sync. Coba lagi.</Text>
       )}
     </View>
   );
@@ -157,13 +227,10 @@ function createStyles(Colors: ColorPalette, Typography: TypographySet, Spacing: 
   return StyleSheet.create({
     container: {
       backgroundColor: Colors.surface,
-      borderRadius: BorderRadius.md,
-      padding: Spacing.md,
+      borderRadius: BorderRadius.lg,
+      padding: Spacing.base,
       borderWidth: 1,
       borderColor: Colors.border,
-    },
-    containerCompact: {
-      padding: Spacing.sm,
     },
     header: {
       marginBottom: Spacing.sm,
@@ -171,20 +238,16 @@ function createStyles(Colors: ColorPalette, Typography: TypographySet, Spacing: 
     title: {
       ...Typography.h3,
     },
-    emptyText: {
-      ...Typography.caption,
-      marginBottom: Spacing.md,
-    },
-    details: {
-      marginBottom: Spacing.md,
-    },
     statusRow: {
       flexDirection: 'row',
       alignItems: 'center',
-      marginBottom: Spacing.sm,
+      marginBottom: Spacing.md,
+      paddingBottom: Spacing.md,
+      borderBottomWidth: 1,
+      borderBottomColor: Colors.border,
     },
     statusIcon: {
-      fontSize: 16,
+      fontSize: 14,
       marginRight: Spacing.sm,
     },
     statusText: {
@@ -194,27 +257,81 @@ function createStyles(Colors: ColorPalette, Typography: TypographySet, Spacing: 
     timeText: {
       ...Typography.caption,
     },
+    sectionLabel: {
+      ...Typography.label,
+      marginBottom: Spacing.sm,
+    },
+    monthScroll: {
+      marginBottom: Spacing.md,
+    },
+    monthPill: {
+      paddingHorizontal: 14,
+      paddingVertical: 8,
+      borderRadius: BorderRadius.full,
+      backgroundColor: Colors.surfaceLight,
+      marginRight: Spacing.sm,
+      borderWidth: 1,
+      borderColor: 'transparent',
+    },
+    monthPillActive: {
+      backgroundColor: Colors.accentDim,
+      borderColor: Colors.accent + '40',
+    },
+    monthPillEdge: {
+      backgroundColor: Colors.accent + '25',
+      borderColor: Colors.accent,
+    },
+    monthPillText: {
+      ...Typography.caption,
+      fontWeight: '600',
+      color: Colors.textSecondary,
+    },
+    monthPillTextActive: {
+      color: Colors.accent,
+    },
+    rangeText: {
+      ...Typography.caption,
+      color: Colors.textMuted,
+      marginBottom: Spacing.md,
+    },
+    buttonRow: {
+      flexDirection: 'row',
+      gap: Spacing.sm,
+    },
+    syncButton: {
+      flex: 1,
+      backgroundColor: Colors.accent,
+      borderRadius: BorderRadius.md,
+      paddingVertical: 14,
+      alignItems: 'center',
+    },
+    syncButtonPressed: {
+      opacity: 0.8,
+    },
+    syncButtonDisabled: {
+      opacity: 0.5,
+    },
+    syncButtonText: {
+      ...Typography.bodyBold,
+      color: Colors.background,
+    },
+    syncAllButton: {
+      backgroundColor: Colors.surfaceLight,
+      borderRadius: BorderRadius.md,
+      paddingVertical: 14,
+      paddingHorizontal: Spacing.base,
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: Colors.border,
+    },
+    syncAllText: {
+      ...Typography.bodyBold,
+      color: Colors.textSecondary,
+    },
     errorText: {
       ...Typography.caption,
       color: Colors.error,
-      marginTop: Spacing.xs,
-    },
-    countsRow: {
-      flexDirection: 'row',
-      justifyContent: 'space-around',
-      backgroundColor: Colors.surfaceLight,
-      borderRadius: BorderRadius.sm,
-      padding: Spacing.sm,
-    },
-    countItem: {
-      alignItems: 'center',
-    },
-    countValue: {
-      ...Typography.h3,
-      color: Colors.primary,
-    },
-    countLabel: {
-      ...Typography.label,
+      marginTop: Spacing.sm,
     },
     compactRow: {
       flexDirection: 'row',
@@ -232,23 +349,6 @@ function createStyles(Colors: ColorPalette, Typography: TypographySet, Spacing: 
     },
     compactText: {
       ...Typography.caption,
-    },
-    syncButton: {
-      backgroundColor: Colors.primary,
-      borderRadius: BorderRadius.md,
-      paddingVertical: 14,
-      alignItems: 'center',
-    },
-    syncButtonPressed: {
-      backgroundColor: Colors.primaryDark,
-    },
-    syncButtonDisabled: {
-      opacity: 0.6,
-    },
-    syncButtonText: {
-      ...Typography.body,
-      color: Colors.background,
-      fontWeight: '600',
     },
   });
 }

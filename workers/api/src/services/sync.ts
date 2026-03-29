@@ -26,7 +26,7 @@ import * as transactionService from './transaction';
  * Build Gmail search query from all registered parsers' sender patterns.
  * E.g. `from:(grab.com OR gojek.com OR shopee.co.id)`
  */
-export function buildGmailQuery(afterDate?: string): string {
+export function buildGmailQuery(afterDate?: string, beforeDate?: string): string {
   const parsers = getAllParsers();
   const domains = new Set<string>();
 
@@ -62,11 +62,14 @@ export function buildGmailQuery(afterDate?: string): string {
   }
 
   const fromClause = `from:(${[...domains].join(' OR ')})`;
+  const parts = [fromClause];
   if (afterDate) {
-    const formatted = afterDate.replace(/-/g, '/');
-    return `${fromClause} after:${formatted}`;
+    parts.push(`after:${afterDate.replace(/-/g, '/')}`);
   }
-  return fromClause;
+  if (beforeDate) {
+    parts.push(`before:${beforeDate.replace(/-/g, '/')}`);
+  }
+  return parts.join(' ');
 }
 
 // ── Sync Log Helpers ───────────────────────────────────────
@@ -189,7 +192,9 @@ export async function syncUserEmails(
   encryptedRefreshToken: string,
   encryptionKey: string,
   clientId: string,
-  clientSecret: string
+  clientSecret: string,
+  afterDate?: string,
+  beforeDate?: string
 ): Promise<SyncLog> {
   const syncLogId = await createSyncLog(db, userId, 'running');
 
@@ -234,9 +239,8 @@ export async function syncUserEmails(
     }
 
     // 3. Build query and list messages
-    // No date filter — rely on processed_emails dedup to skip already-seen emails.
-    // This ensures historical emails from newly-added parsers are always fetched.
-    const query = buildGmailQuery();
+    // Use date range if provided, otherwise fetch all (dedup handles repeats)
+    const query = buildGmailQuery(afterDate, beforeDate);
     console.log(`[sync] User ${userId} | Gmail query: ${query}`);
 
     const messages = await listGmailMessages(accessToken, query, 20);
@@ -423,7 +427,9 @@ export async function triggerSync(
   userId: string,
   encryptionKey: string,
   clientId: string,
-  clientSecret: string
+  clientSecret: string,
+  afterDate?: string,
+  beforeDate?: string
 ): Promise<SyncLog> {
   // Get user's encrypted refresh token
   const user = await db
@@ -450,7 +456,9 @@ export async function triggerSync(
     user.gmail_refresh_token,
     encryptionKey,
     clientId,
-    clientSecret
+    clientSecret,
+    afterDate,
+    beforeDate
   );
 }
 
