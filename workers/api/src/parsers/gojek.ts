@@ -36,9 +36,9 @@ function detectCategory(text: string): { category: CategoryHint; service: string
 
 /** Amount extraction patterns for Gojek */
 const AMOUNT_PATTERNS: RegExp[] = [
-  /total\s*(?:pembayaran|payment|biaya|tagihan)\s*[:\s]*(?:Rp\.?\s*[\d.]+)/i,
-  /total\s*[:\s]*(?:Rp\.?\s*[\d.]+)/i,
-  /(?:Rp\.?\s*[\d.]+)/i,
+  /total\s*(?:pembayaran|payment|biaya|tagihan)\s*[:\s]*(?:Rp\.?\s*[\d.,]+)/i,
+  /total\s*[:\s]*(?:Rp\.?\s*[\d.,]+)/i,
+  /(?:Rp\.?\s*[\d.,]+)/i,
 ];
 
 function extractAmount(body: string): number | null {

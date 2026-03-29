@@ -23,11 +23,11 @@ function extractOrderRef(text: string): string | null {
   return null;
 }
 
-/** Amount extraction patterns for Shopee */
+/** Amount extraction patterns for Shopee — most specific first */
 const AMOUNT_PATTERNS: RegExp[] = [
-  /total\s*(?:pembayaran|payment|pesanan|order|belanja)\s*[:\s]*(?:Rp\.?\s*[\d.]+)/i,
-  /total\s*[:\s]*(?:Rp\.?\s*[\d.]+)/i,
-  /(?:Rp\.?\s*[\d.]+)/i,
+  /total\s*(?:pembayaran|payment|pesanan|order|belanja)\s*[:\s]*(?:Rp\.?\s*[\d.,]+)/i,
+  /total\s*[:\s]*(?:Rp\.?\s*[\d.,]+)/i,
+  /(?:Rp\.?\s*[\d.,]+)/i,
 ];
 
 function extractAmount(body: string): number | null {
@@ -53,8 +53,22 @@ export const shopeeParser: EmailParser = {
   parse(email: EmailInput): ParsedTransaction | null {
     const { body, subject, date } = email;
     const fullText = `${subject} ${body}`;
+    const subjectLower = subject.toLowerCase();
 
-    // Extract amount — required
+    // Skip non-transaction emails (delivery updates, promos, surveys)
+    const skipPatterns = [
+      /telah dikirim/i,
+      /telah tiba/i,
+      /beri penilaian/i,
+      /spill produk/i,
+      /ingin dengar pendapat/i,
+      /promo|diskon|voucher gratis|flash sale/i,
+      /undang teman/i,
+    ];
+    if (skipPatterns.some((p) => p.test(subjectLower))) return null;
+
+    // Extract amount — required. Must have "Total Pembayaran" or similar
+    // to avoid picking up item prices from notification emails
     const amount = extractAmount(fullText);
     if (amount === null) return null;
 

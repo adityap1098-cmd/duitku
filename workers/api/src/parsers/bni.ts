@@ -55,8 +55,8 @@ function detectCategory(text: string): CategoryHint {
 
 /** Amount extraction patterns for BNI */
 const AMOUNT_PATTERNS: RegExp[] = [
-  /(?:sebesar|sejumlah|nominal|amount)\s*[:\s]*(?:Rp\.?\s*[\d.]+)/i,
-  /(?:Rp\.?\s*[\d.]+)/i,
+  /(?:sebesar|sejumlah|nominal|amount)\s*[:\s]*(?:Rp\.?\s*[\d.,]+)/i,
+  /(?:Rp\.?\s*[\d.,]+)/i,
 ];
 
 function extractAmount(text: string): number | null {

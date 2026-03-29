@@ -36,18 +36,20 @@ export interface EmailParser {
  * Returns null if no valid number can be extracted.
  */
 export function parseRupiahAmount(text: string): number | null {
-  // Match Rp prefix (optional), optional space, then digits with optional dot separators
-  const match = text.match(/Rp\.?\s*([\d.]+)/i);
+  // Match Rp prefix (optional), optional space, then digits with dot/comma separators
+  // Handles: Rp 178.404, Rp 178,404, Rp150.000, Rp 1.250.000
+  const match = text.match(/Rp\.?\s*([\d.,]+)/i);
   if (match) {
-    const raw = match[1].replace(/\./g, '');
+    // Remove all dots and commas (both are thousand separators in Indonesian context)
+    const raw = match[1].replace(/[.,]/g, '');
     const num = parseInt(raw, 10);
     return isNaN(num) || num <= 0 ? null : num;
   }
 
-  // Fallback: try bare number with dots (e.g. "150.000")
-  const bareMatch = text.match(/([\d.]{3,})/);
+  // Fallback: try bare number with dots/commas (e.g. "150.000" or "150,000")
+  const bareMatch = text.match(/([\d.,]{3,})/);
   if (bareMatch) {
-    const raw = bareMatch[1].replace(/\./g, '');
+    const raw = bareMatch[1].replace(/[.,]/g, '');
     const num = parseInt(raw, 10);
     return isNaN(num) || num <= 0 ? null : num;
   }

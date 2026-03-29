@@ -9,9 +9,9 @@ import { parseRupiahAmount, truncateSnippet, extractDate } from './_template';
 
 /** Amount extraction patterns for Jago — most specific first */
 const AMOUNT_PATTERNS: RegExp[] = [
-  /(?:sebesar|sejumlah|nominal|amount)\s*(?:Rp\.?\s*[\d.]+)/i,
-  /(?:total|pembayaran|transfer)\s*[:\s]*(?:Rp\.?\s*[\d.]+)/i,
-  /Rp\.?\s*[\d.]+/i,
+  /(?:sebesar|sejumlah|nominal|amount)\s*(?:Rp\.?\s*[\d.,]+)/i,
+  /(?:total|pembayaran|transfer)\s*[:\s]*(?:Rp\.?\s*[\d.,]+)/i,
+  /Rp\.?\s*[\d.,]+/i,
 ];
 
 function extractAmount(body: string): number | null {
@@ -59,6 +59,16 @@ export const jagoParser: EmailParser = {
   parse(email: EmailInput): ParsedTransaction | null {
     const { body, subject, date } = email;
     const fullText = `${subject} ${body}`;
+
+    // Skip non-transaction emails (promos, info, security alerts)
+    const skipPatterns = [
+      /waspada|penipuan/i,
+      /promo|diskon|potongan harga/i,
+      /info terkait/i,
+      /rekening tidak aktif|dormant/i,
+      /mengunci.*kartu/i,
+    ];
+    if (skipPatterns.some((p) => p.test(subject))) return null;
 
     const amount = extractAmount(fullText);
     if (amount === null) return null;

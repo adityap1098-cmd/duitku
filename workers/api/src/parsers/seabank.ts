@@ -9,9 +9,9 @@ import { parseRupiahAmount, truncateSnippet, extractDate } from './_template';
 
 /** Amount extraction patterns for SeaBank — most specific first */
 const AMOUNT_PATTERNS: RegExp[] = [
-  /(?:sebesar|sejumlah|nominal|amount)\s*(?:Rp\.?\s*[\d.]+)/i,
-  /(?:total|pembayaran|transfer)\s*[:\s]*(?:Rp\.?\s*[\d.]+)/i,
-  /Rp\.?\s*[\d.]+/i,
+  /(?:sebesar|sejumlah|nominal|amount)\s*(?:Rp\.?\s*[\d.,]+)/i,
+  /(?:total|pembayaran|transfer)\s*[:\s]*(?:Rp\.?\s*[\d.,]+)/i,
+  /Rp\.?\s*[\d.,]+/i,
 ];
 
 function extractAmount(body: string): number | null {

@@ -23,9 +23,9 @@ function extractOrderRef(text: string): string | null {
 
 /** Amount extraction patterns for Tokopedia — most specific first */
 const AMOUNT_PATTERNS: RegExp[] = [
-  /total\s*(?:pembayaran|tagihan|belanja)\s*[:\s]*(?:Rp\.?\s*[\d.]+)/i,
-  /total\s*[:\s]*(?:Rp\.?\s*[\d.]+)/i,
-  /(?:Rp\.?\s*[\d.]+)/i,
+  /total\s*(?:pembayaran|tagihan|belanja)\s*[:\s]*(?:Rp\.?\s*[\d.,]+)/i,
+  /total\s*[:\s]*(?:Rp\.?\s*[\d.,]+)/i,
+  /(?:Rp\.?\s*[\d.,]+)/i,
 ];
 
 function extractAmount(body: string): number | null {
@@ -52,6 +52,16 @@ export const tokopediaParser: EmailParser = {
   parse(email: EmailInput): ParsedTransaction | null {
     const { body, subject, date } = email;
     const fullText = `${subject} ${body}`;
+
+    // Skip non-payment emails (delivery updates, promos, reviews)
+    const skipPatterns = [
+      /pesanan selesai/i,
+      /telah dikirim/i,
+      /telah tiba/i,
+      /beri ulasan/i,
+      /promo|diskon|cashback/i,
+    ];
+    if (skipPatterns.some((p) => p.test(subject))) return null;
 
     // Extract amount — required
     const amount = extractAmount(fullText);
