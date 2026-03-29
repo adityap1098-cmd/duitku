@@ -13,6 +13,7 @@ import { DEFAULT_CATEGORIES } from '@duitku/shared';
 import { getAmountColor } from '../../../constants/theme';
 import type { Transaction } from '@duitku/shared';
 import type { ColorPalette, TypographySet } from '../../../constants/theme';
+import { lightImpact } from '../../../lib/haptics';
 
 interface TransactionCardProps {
   transaction: Transaction;
@@ -40,29 +41,47 @@ function formatDate(iso: string): string {
   return `${parseInt(day, 10)} ${months[monthIdx] ?? month} ${year}`;
 }
 
+/** Get platform color from theme */
+function getPlatformColor(platform: string, Colors: ColorPalette) {
+  switch (platform.toLowerCase()) {
+    case 'grab': return Colors.grab;
+    case 'gojek': return Colors.gojek;
+    case 'shopee': return Colors.shopee;
+    case 'tokopedia': return Colors.tokopedia;
+    case 'ovo': return Colors.ovo;
+    case 'dana': return Colors.dana;
+    default: return Colors.accent;
+  }
+}
+
 export default function TransactionCard({ transaction }: TransactionCardProps) {
   const router = useRouter();
   const { Colors, Typography, Spacing, BorderRadius } = useTheme();
   const styles = useMemo(() => createStyles(Colors, Typography, Spacing, BorderRadius), [Colors, Typography, Spacing, BorderRadius]);
   const category = getCategoryDisplay(transaction.category);
   const isIncome = transaction.type === 'income';
+
   const amountColor = getAmountColor(
     Colors,
     transaction.amount,
     transaction.type as 'expense' | 'income',
   );
+
+  const handlePress = () => {
+    lightImpact();
+    router.push({
+      pathname: '/(tabs)/transactions/[id]',
+      params: { id: transaction.id },
+    });
+  };
+
   return (
     <Pressable
       style={({ pressed }) => [
         styles.container,
         pressed && styles.pressed,
       ]}
-      onPress={() =>
-        router.push({
-          pathname: '/(tabs)/transactions/[id]',
-          params: { id: transaction.id },
-        })
-      }
+      onPress={handlePress}
     >
       <View style={styles.iconContainer}>
         <Text style={styles.icon}>{category.icon}</Text>
@@ -86,10 +105,22 @@ export default function TransactionCard({ transaction }: TransactionCardProps) {
             { color: amountColor },
           ]}
         >
-          {isIncome ? '+' : '-'} {formatRupiah(transaction.amount)}
+          {formatRupiah(transaction.amount, transaction.type)}
         </Text>
         <View style={styles.badgeRow}>
-          {transaction.source === 'gmail_sync' ? (
+          {transaction.platform ? (
+            <View style={[
+              styles.badge,
+              { backgroundColor: getPlatformColor(transaction.platform, Colors) + '20' }
+            ]}>
+              <Text style={[
+                styles.badgeText,
+                { color: getPlatformColor(transaction.platform, Colors), textTransform: 'capitalize' }
+              ]}>
+                {transaction.platform}
+              </Text>
+            </View>
+          ) : transaction.source === 'gmail_sync' ? (
             <View style={[styles.badge, { backgroundColor: Colors.accentDim }]}>
               <Text style={[styles.badgeText, { color: Colors.accent }]}>Synced</Text>
             </View>

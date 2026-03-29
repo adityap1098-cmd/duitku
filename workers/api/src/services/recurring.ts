@@ -104,6 +104,22 @@ export async function confirmRecurring(
 ): Promise<RecurringTransaction> {
   validateConfirmInput(input);
 
+  const description = input.description.trim();
+  const category = input.category;
+
+  // Duplicate guard: check if this user already has an active recurring rule
+  // with the exact same description and category.
+  const existing = await db
+    .prepare(
+      'SELECT id FROM recurring_transactions WHERE user_id = ? AND description = ? AND category = ? AND is_dismissed = 0'
+    )
+    .bind(userId, description, category)
+    .first<{ id: string }>();
+
+  if (existing) {
+    throw Errors.VALIDATION('This recurring transaction is already confirmed');
+  }
+
   const id = crypto.randomUUID();
   const now = new Date().toISOString();
 
@@ -112,14 +128,14 @@ export async function confirmRecurring(
       `INSERT INTO recurring_transactions (id, user_id, description, category, estimated_amount, is_dismissed, created_at, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
     )
-    .bind(id, userId, input.description.trim(), input.category, input.estimated_amount, 0, now, now)
+    .bind(id, userId, description, category, input.estimated_amount, 0, now, now)
     .run();
 
   return {
     id,
     user_id: userId,
-    description: input.description.trim(),
-    category: input.category,
+    description,
+    category,
     estimated_amount: input.estimated_amount,
     is_dismissed: 0,
     created_at: now,

@@ -32,19 +32,37 @@ export function buildGmailQuery(afterDate?: string): string {
 
   for (const parser of parsers) {
     for (const pattern of parser.senderPatterns) {
-      // Extract domain-like string from regex source
-      // e.g. /grab\.com$/i → "grab.com", /gojek\.com$/i → "gojek.com"
-      const source = pattern.source
-        .replace(/\\\./g, '.')
-        .replace(/\$$/, '')
-        .replace(/^\^?@?/, '');
-      domains.add(source);
+      // Extract domain from regex source
+      // e.g. /no-?reply@shopee\.co\.id/i → "shopee.co.id"
+      // e.g. /@bankmandiri\.co\.id/i → "bankmandiri.co.id"
+      // e.g. /.*@go-jek\.com/i → "go-jek.com"
+      const source = pattern.source;
+
+      // Find the @ sign and take everything after it as the domain
+      const atIndex = source.indexOf('@');
+      if (atIndex >= 0) {
+        const domainPart = source
+          .slice(atIndex + 1)
+          .replace(/\\\./g, '.')   // unescape dots
+          .replace(/\$$/, '')      // remove end anchor
+          .replace(/\/[gimsuy]*$/, ''); // remove flags
+        domains.add(domainPart);
+      } else {
+        // No @, try the old approach (e.g. /grab\.com$/i)
+        const cleaned = source
+          .replace(/\\\./g, '.')
+          .replace(/\$$/, '')
+          .replace(/^\^?/, '')
+          .replace(/\.\*.*$/, ''); // remove wildcards
+        if (cleaned.includes('.')) {
+          domains.add(cleaned);
+        }
+      }
     }
   }
 
   const fromClause = `from:(${[...domains].join(' OR ')})`;
   if (afterDate) {
-    // Gmail query format for after: YYYY/MM/DD
     const formatted = afterDate.replace(/-/g, '/');
     return `${fromClause} after:${formatted}`;
   }
@@ -261,6 +279,7 @@ export async function syncUserEmails(
             description: parsed.description,
             date: parsed.date,
             source: 'gmail_sync',
+            platform: parsed.platform,
             notes: parsed.originalSnippet,
           });
           transactionsCreated++;

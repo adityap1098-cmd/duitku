@@ -4,12 +4,35 @@ import { StatusBar } from 'expo-status-bar';
 import { View, ActivityIndicator, StyleSheet, AppState, type AppStateStatus } from 'react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import * as WebBrowser from 'expo-web-browser';
+import * as SplashScreen from 'expo-splash-screen';
+import {
+  useFonts,
+  Outfit_400Regular,
+  Outfit_600SemiBold,
+  Outfit_700Bold,
+  Outfit_800ExtraBold,
+  Outfit_900Black
+} from '@expo-google-fonts/outfit';
+import {
+  PlusJakartaSans_400Regular,
+  PlusJakartaSans_500Medium,
+  PlusJakartaSans_600SemiBold,
+  PlusJakartaSans_700Bold
+} from '@expo-google-fonts/plus-jakarta-sans';
+import {
+  SpaceMono_400Regular,
+  SpaceMono_700Bold
+} from '@expo-google-fonts/space-mono';
+
 import { Config } from '../constants/config';
 import { useAuthStore } from '../stores/auth-store';
 import { useSettingsStore } from '../stores/settings-store';
 import { initNotifications } from '../lib/notifications';
 import { ThemeProvider, useTheme } from '../contexts/theme-context';
 import { BiometricLock } from '../components/biometric-lock';
+
+// Prevent splash screen from auto-hiding
+SplashScreen.preventAutoHideAsync();
 
 // MUST be called at module level in root layout to intercept OAuth redirects
 // before expo-router tries to match the deep link to a route.
@@ -30,15 +53,15 @@ const queryClient = new QueryClient({
  * - Returning users (not authenticated, seen onboarding) → login
  * - Authenticated users on auth/onboarding routes → home
  */
-function useProtectedRoute() {
+function useProtectedRoute(isLoaded: boolean) {
   const { isAuthenticated, isLoading } = useAuthStore();
   const hasSeenOnboarding = useSettingsStore((s) => s.hasSeenOnboarding);
   const segments = useSegments();
   const router = useRouter();
 
   useEffect(() => {
-    // Don't redirect while auth state is loading
-    if (isLoading) return;
+    // Don't redirect while auth state or fonts are loading
+    if (isLoading || !isLoaded) return;
 
     const inAuthGroup = segments[0] === '(auth)';
     const inOnboardingGroup = segments[0] === '(onboarding)';
@@ -53,7 +76,7 @@ function useProtectedRoute() {
       // Authenticated but on login/onboarding → redirect to home
       router.replace('/(tabs)/home' as never);
     }
-  }, [isAuthenticated, isLoading, hasSeenOnboarding, segments, router]);
+  }, [isAuthenticated, isLoading, isLoaded, hasSeenOnboarding, segments, router]);
 }
 
 /**
@@ -61,14 +84,38 @@ function useProtectedRoute() {
  * Shows a loading spinner while auth state hydrates from secure storage.
  */
 function RootLayoutInner() {
-  const { isLoading } = useAuthStore();
+  const { isLoading: authLoading } = useAuthStore();
   const { Colors, isDark } = useTheme();
   const biometricEnabled = useSettingsStore((s) => s.biometricEnabled);
 
   const [isLocked, setIsLocked] = useState(false);
   const appStateRef = useRef<AppStateStatus>(AppState.currentState);
 
-  useProtectedRoute();
+  // Load Fonts
+  const [fontsLoaded, fontError] = useFonts({
+    'Outfit': Outfit_700Bold, // Default Outfit
+    'Outfit-Regular': Outfit_400Regular,
+    'Outfit-SemiBold': Outfit_600SemiBold,
+    'Outfit-Bold': Outfit_700Bold,
+    'Outfit-ExtraBold': Outfit_800ExtraBold,
+    'Outfit-Black': Outfit_900Black,
+    'PlusJakartaSans': PlusJakartaSans_400Regular,
+    'PlusJakartaSans-Medium': PlusJakartaSans_500Medium,
+    'PlusJakartaSans-SemiBold': PlusJakartaSans_600SemiBold,
+    'PlusJakartaSans-Bold': PlusJakartaSans_700Bold,
+    'SpaceMono': SpaceMono_400Regular,
+    'SpaceMono-Bold': SpaceMono_700Bold,
+  });
+
+  const isLoaded = fontsLoaded || !!fontError;
+
+  useProtectedRoute(isLoaded);
+
+  useEffect(() => {
+    if (isLoaded && !authLoading) {
+      SplashScreen.hideAsync();
+    }
+  }, [isLoaded, authLoading]);
 
   // Request notification permissions on app startup
   useEffect(() => {
@@ -77,13 +124,13 @@ function RootLayoutInner() {
 
   // Verify stored tokens are still valid on app launch
   useEffect(() => {
-    if (!isLoading) {
+    if (!authLoading) {
       const { restoreSession, isAuthenticated } = useAuthStore.getState();
       if (isAuthenticated) {
         restoreSession();
       }
     }
-  }, [isLoading]);
+  }, [authLoading]);
 
   // Listen for app state changes to trigger biometric lock
   useEffect(() => {
@@ -106,14 +153,9 @@ function RootLayoutInner() {
     setIsLocked(false);
   }, []);
 
-  // Show loading screen while hydrating auth state from secure storage
-  if (isLoading) {
-    return (
-      <View style={[styles.loadingContainer, { backgroundColor: Colors.background }]}>
-        <StatusBar style={isDark ? 'light' : 'dark'} />
-        <ActivityIndicator size="large" color={Colors.primary} />
-      </View>
-    );
+  // Show nothing while fonts/auth are loading (Splash screen is showing)
+  if (!isLoaded || authLoading) {
+    return null;
   }
 
   return (

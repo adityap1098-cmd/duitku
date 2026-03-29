@@ -12,6 +12,17 @@ import type { TextStyle } from 'react-native';
 
 export type ThemeType = 'dark' | 'light' | 'system';
 
+// --------------- Font Tokens (spec spec) ---------------
+
+export const Fonts = {
+  heading: 'Outfit-Bold',      // Hero amounts, screen titles
+  mono: 'SpaceMono-Bold',      // Transaction amounts in list (tabular/aligned)
+  body: 'PlusJakartaSans',     // Body text, labels, descriptions
+  bodyMedium: 'PlusJakartaSans-Medium',
+  bodySemiBold: 'PlusJakartaSans-SemiBold',
+  bodyBold: 'PlusJakartaSans-Bold',
+} as const;
+
 // --------------- Dark Colors (primary) ---------------
 
 export const DarkColors = {
@@ -220,6 +231,7 @@ export const BorderRadius = {
 /** Typography styles for dark theme */
 export const DarkTypography = {
   h1: {
+    fontFamily: Fonts.heading,
     fontSize: 32,
     fontWeight: '900' as TextStyle['fontWeight'],
     letterSpacing: -1,
@@ -227,6 +239,7 @@ export const DarkTypography = {
     color: DarkColors.text,
   },
   h2: {
+    fontFamily: Fonts.heading,
     fontSize: 24,
     fontWeight: '800' as TextStyle['fontWeight'],
     letterSpacing: -0.5,
@@ -234,36 +247,42 @@ export const DarkTypography = {
     color: DarkColors.text,
   },
   h3: {
+    fontFamily: Fonts.bodyBold,
     fontSize: 18,
     fontWeight: '700' as TextStyle['fontWeight'],
     lineHeight: 24,
     color: DarkColors.text,
   },
   body: {
+    fontFamily: Fonts.body,
     fontSize: 14,
     fontWeight: '400' as TextStyle['fontWeight'],
     lineHeight: 20,
     color: DarkColors.text,
   },
   bodyBold: {
+    fontFamily: Fonts.bodyBold,
     fontSize: 14,
     fontWeight: '700' as TextStyle['fontWeight'],
     lineHeight: 20,
     color: DarkColors.text,
   },
   caption: {
+    fontFamily: Fonts.bodyMedium,
     fontSize: 12,
     fontWeight: '500' as TextStyle['fontWeight'],
     lineHeight: 16,
     color: DarkColors.textSecondary,
   },
   captionBold: {
+    fontFamily: Fonts.bodyBold,
     fontSize: 12,
     fontWeight: '700' as TextStyle['fontWeight'],
     lineHeight: 16,
     color: DarkColors.textSecondary,
   },
   label: {
+    fontFamily: Fonts.bodyBold,
     fontSize: 11,
     fontWeight: '700' as TextStyle['fontWeight'],
     letterSpacing: 1,
@@ -272,24 +291,28 @@ export const DarkTypography = {
     textTransform: 'uppercase' as const,
   },
   xs: {
+    fontFamily: Fonts.bodySemiBold,
     fontSize: 10,
     fontWeight: '600' as TextStyle['fontWeight'],
     lineHeight: 14,
     color: DarkColors.textMuted,
   },
   amount: {
-    fontSize: 15,
-    fontWeight: '800' as TextStyle['fontWeight'],
+    fontFamily: Fonts.mono,
+    fontSize: 13,
+    fontWeight: '700' as TextStyle['fontWeight'],
     lineHeight: 20,
     color: DarkColors.text,
   },
   amountLg: {
+    fontFamily: Fonts.heading,
     fontSize: 28,
     fontWeight: '900' as TextStyle['fontWeight'],
     lineHeight: 34,
     color: DarkColors.text,
   },
   badge: {
+    fontFamily: Fonts.bodyBold,
     fontSize: 9,
     fontWeight: '700' as TextStyle['fontWeight'],
     lineHeight: 12,
@@ -318,6 +341,7 @@ export const Typography = DarkTypography;
 
 /** A single typography style entry compatible with RN TextStyle */
 type TypoEntry = {
+  readonly fontFamily?: string;
   readonly fontSize: number;
   readonly fontWeight: TextStyle['fontWeight'];
   readonly lineHeight: number;

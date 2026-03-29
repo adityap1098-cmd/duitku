@@ -6,28 +6,58 @@
  * Format an integer amount in Rupiah with thousand separators.
  * Uses dot as thousands separator (Indonesian convention).
  *
- * @example formatRupiah(150000) → "Rp 150.000"
- * @example formatRupiah(1500000) → "Rp 1.500.000"
- * @example formatRupiah(0) → "Rp 0"
+ * Follows CLAUDE.md spec:
+ * - Prefix "Rp " (with space)
+ * - Dot separator for thousands
+ * - No extra space after +/- sign
+ *
+ * @example formatRupiah(45000) → "Rp 45.000"
+ * @example formatRupiah(-45000) → "-Rp 45.000"
+ * @example formatRupiah(5000000, 'income') → "+Rp 5.000.000"
  */
-export function formatRupiah(amount: number): string {
-  const formatted = Math.abs(amount)
-    .toString()
-    .replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+export function formatRupiah(
+  amount: number,
+  type?: 'expense' | 'income' | 'neutral',
+): string {
+  const abs = Math.abs(amount);
+  const formatted = abs.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+
+  // Type takes precedence over sign when provided
+  if (type === 'income') return `+Rp ${formatted}`;
+  if (type === 'expense') return `-Rp ${formatted}`;
+  if (type === 'neutral') return `Rp ${formatted}`;
+
+  // Fallback to sign-based when no type provided
+  if (amount > 0) return `+Rp ${formatted}`;
+  if (amount < 0) return `-Rp ${formatted}`;
   return `Rp ${formatted}`;
 }
 
 /**
- * Format a signed amount for display (positive = income, negative = expense).
- * Adds + or - prefix.
+ * Compact number formatting for Indonesia.
+ * For places with limited space (chart label, pill, summary card).
  *
- * @example formatSignedRupiah(150000, 'income') → "+ Rp 150.000"
- * @example formatSignedRupiah(50000, 'expense') → "- Rp 50.000"
+ * @example formatCompact(1250000) → "1.2jt"
+ * @example formatCompact(45000) → "45rb"
+ * @example formatCompact(2500000000) → "2.5M"
+ */
+export function formatCompact(amount: number): string {
+  const abs = Math.abs(amount);
+  if (abs >= 1_000_000_000)
+    return (abs / 1_000_000_000).toFixed(1).replace('.0', '') + 'M';
+  if (abs >= 1_000_000)
+    return (abs / 1_000_000).toFixed(1).replace('.0', '') + 'jt';
+  if (abs >= 1_000) return (abs / 1_000).toFixed(0) + 'rb';
+  return abs.toString();
+}
+
+/**
+ * Backward compatibility alias.
+ * @deprecated Use formatRupiah(amount, type) instead.
  */
 export function formatSignedRupiah(
   amount: number,
   type: 'income' | 'expense'
 ): string {
-  const prefix = type === 'income' ? '+' : '-';
-  return `${prefix} ${formatRupiah(amount)}`;
+  return formatRupiah(amount, type);
 }

@@ -102,9 +102,18 @@ export async function getSpendingTrend(
   userId: string,
   months: number = 6
 ): Promise<{ data: SpendingTrend[] }> {
+  // Validate months to prevent NaN or extreme values causing Invalid Date
+  const safeMonths = isNaN(months) || months < 1 ? 6 : Math.min(months, 24);
+
   // Calculate start date as N months ago (first day of that month)
   const now = new Date();
-  const startDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - months + 1, 1));
+  const startDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - safeMonths + 1, 1));
+
+  // Guard against Invalid Date
+  if (isNaN(startDate.getTime())) {
+    return { data: [] };
+  }
+
   const startStr = startDate.toISOString().split('T')[0];
 
   const result = await db

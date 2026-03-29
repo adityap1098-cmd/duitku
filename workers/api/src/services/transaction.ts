@@ -202,6 +202,7 @@ export async function create(
   const date = input.date ? validateDate(input.date) : new Date().toISOString().split('T')[0];
   const description = input.description ?? '';
   const source = input.source ?? 'manual';
+  const platform = input.platform ?? null;
   const notes = input.notes ?? null;
 
   const id = crypto.randomUUID();
@@ -209,10 +210,10 @@ export async function create(
 
   await db
     .prepare(
-      `INSERT INTO transactions (id, user_id, type, amount, category, description, date, source, notes, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      `INSERT INTO transactions (id, user_id, type, amount, category, description, date, source, platform, notes, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     )
-    .bind(id, userId, type, amount, category, description, date, source, notes, now, now)
+    .bind(id, userId, type, amount, category, description, date, source, platform, notes, now, now)
     .run();
 
   return {
@@ -224,6 +225,7 @@ export async function create(
     description,
     date,
     source,
+    platform,
     notes,
     created_at: now,
     updated_at: now,

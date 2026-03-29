@@ -1,14 +1,15 @@
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, Image, ScrollView, ActivityIndicator, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, Image, ScrollView, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../../../contexts/theme-context';
 import { useAuthStore } from '../../../stores/auth-store';
 import { useTransactions, useTransactionSummary } from '../../../features/transactions/hooks/use-transactions';
+import { useTriggerSync } from '../../../features/sync/hooks/use-sync';
 import TransactionCard from '../../../features/transactions/components/transaction-card';
 import SyncStatus from '../../../features/sync/components/sync-status';
 import { formatRupiah } from '../../../lib/format';
-import { useQueryClient } from '@tanstack/react-query';
+import { TransactionSkeleton, Skeleton } from '../../../components/skeleton';
 import type { ColorPalette, TypographySet } from '../../../constants/theme';
 
 /** Get current month date range (YYYY-MM-DD) */
@@ -29,7 +30,6 @@ function getCurrentMonthRange(): { date_from: string; date_to: string } {
 export default function HomeScreen() {
   const { Colors, Typography, Spacing, BorderRadius } = useTheme();
   const { user } = useAuthStore();
-  const queryClient = useQueryClient();
   const styles = useMemo(() => createStyles(Colors, Typography, Spacing, BorderRadius), [Colors, Typography, Spacing, BorderRadius]);
 
   // Current month filter for summary
@@ -41,13 +41,23 @@ export default function HomeScreen() {
 
   const summary = summaryRes?.data;
 
+  // Sync mutations
+  const triggerSync = useTriggerSync();
+
   // Pull-to-refresh
   const [refreshing, setRefreshing] = React.useState(false);
   const onRefresh = React.useCallback(async () => {
     setRefreshing(true);
+    try {
+      await triggerSync.mutateAsync();
+    } catch (err) {
+      // Ignore sync errors for pull-to-refresh UI
+    }
+
     await Promise.all([refetchSummary(), refetchRecent()]);
     setRefreshing(false);
-  }, [refetchSummary, refetchRecent]);
+  }, [refetchSummary, refetchRecent, triggerSync]);
+
   const recentTransactions = recentRes?.data ?? [];
 
   return (
@@ -95,26 +105,34 @@ export default function HomeScreen() {
 
           <Text style={styles.heroLabel}>PENGELUARAN BULAN INI</Text>
           {summaryLoading ? (
-            <ActivityIndicator size="small" color="#fff" style={{ marginVertical: 8 }} />
+            <Skeleton width={180} height={34} borderRadius={8} style={{ marginVertical: 4, backgroundColor: 'rgba(255,255,255,0.2)' }} />
           ) : (
             <Text style={styles.heroAmount}>
-              {summary ? formatRupiah(summary.total_expense) : 'Rp 0'}
+              {formatRupiah(summary?.total_expense ?? 0, 'neutral')}
             </Text>
           )}
 
           <View style={styles.heroRow}>
             <View style={styles.heroStat}>
               <Text style={styles.heroStatLabel}>Pemasukan</Text>
-              <Text style={[styles.heroStatValue, { color: '#A5F3C4' }]}>
-                {summary ? `+${formatRupiah(summary.total_income)}` : '+Rp 0'}
-              </Text>
+              {summaryLoading ? (
+                <Skeleton width={80} height={16} borderRadius={4} style={{ marginTop: 2, backgroundColor: 'rgba(255,255,255,0.1)' }} />
+              ) : (
+                <Text style={[styles.heroStatValue, { color: '#A5F3C4' }]}>
+                  {formatRupiah(summary?.total_income ?? 0, 'income')}
+                </Text>
+              )}
             </View>
             <View style={styles.heroStatDivider} />
             <View style={styles.heroStat}>
               <Text style={styles.heroStatLabel}>Transaksi</Text>
-              <Text style={styles.heroStatValue}>
-                {summary?.count ?? 0}
-              </Text>
+              {summaryLoading ? (
+                <Skeleton width={40} height={16} borderRadius={4} style={{ marginTop: 2, backgroundColor: 'rgba(255,255,255,0.1)' }} />
+              ) : (
+                <Text style={styles.heroStatValue}>
+                  {summary?.count ?? 0}
+                </Text>
+              )}
             </View>
           </View>
         </LinearGradient>
@@ -129,7 +147,11 @@ export default function HomeScreen() {
           <Text style={styles.sectionTitle}>Transaksi Terakhir</Text>
 
           {recentLoading ? (
-            <ActivityIndicator size="small" color={Colors.primary} style={{ marginVertical: 20 }} />
+            <View>
+              <TransactionSkeleton />
+              <TransactionSkeleton />
+              <TransactionSkeleton />
+            </View>
           ) : recentTransactions.length === 0 ? (
             <View style={styles.emptyState}>
               <Text style={styles.emptyIcon}>📧</Text>

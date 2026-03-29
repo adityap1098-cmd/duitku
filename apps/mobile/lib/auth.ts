@@ -74,6 +74,10 @@ export async function login(): Promise<AuthCallbackResponse> {
     // Listen for the deep link redirect
     const handleRedirect = async (event: { url: string }) => {
       if (settled) return;
+
+      // Basic check if this is the expected auth callback URL
+      if (!event.url.includes('auth/callback')) return;
+
       settled = true;
       if (timeoutId) clearTimeout(timeoutId);
       subscription.remove();
@@ -108,7 +112,7 @@ export async function login(): Promise<AuthCallbackResponse> {
       const state = encodeURIComponent(returnUri);
       const authUrl = `${Config.API_URL}/auth/google?state=${state}`;
 
-      const result = await WebBrowser.openBrowserAsync(authUrl);
+      await WebBrowser.openBrowserAsync(authUrl);
 
       // If browser was dismissed without redirect, reject after a short delay
       // (the deep link handler might fire slightly after browser close)

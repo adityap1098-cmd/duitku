@@ -1,16 +1,17 @@
 /**
- * Transactions list screen — filterable list with FAB to add new transaction.
+ * Transactions list screen — filterable list of all transactions.
+ * Uses skeletons for loading and haptics for interactions.
  */
 
 import { useState, useCallback, useMemo } from 'react';
-import { View, Text, FlatList, Pressable, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, Pressable, StyleSheet, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useTheme } from '../../../contexts/theme-context';
 import { useTransactions } from '../../../features/transactions/hooks/use-transactions';
 import TransactionCard from '../../../features/transactions/components/transaction-card';
 import TransactionFilters from '../../../features/transactions/components/transaction-filters';
+import { TransactionSkeleton } from '../../../components/skeleton';
+import { lightImpact, mediumImpact } from '../../../lib/haptics';
 import type { TransactionFilter, Transaction } from '@duitku/shared';
 import type { ColorPalette, TypographySet } from '../../../constants/theme';
 
@@ -24,15 +25,17 @@ function getCurrentMonthRange(): { date_from: string; date_to: string } {
   const firstDay = new Date(year, month, 1);
   const lastDay = new Date(year, month + 1, 0);
 
-  const fmt = (d: Date) => d.toISOString().split('T')[0];
-  return { date_from: fmt(firstDay), date_to: fmt(lastDay) };
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return {
+    date_from: `${year}-${pad(month + 1)}-01`,
+    date_to: `${year}-${pad(month + 1)}-${pad(lastDay.getDate())}`
+  };
 }
 
 export default function TransactionsScreen() {
-  const router = useRouter();
-  const { Colors, Typography, Spacing, BorderRadius, Shadows } = useTheme();
-  const styles = useMemo(() => createStyles(Colors, Typography, Spacing, BorderRadius, Shadows), [Colors, Typography, Spacing, BorderRadius, Shadows]);
-  const monthRange = getCurrentMonthRange();
+  const { Colors, Typography, Spacing, BorderRadius } = useTheme();
+  const styles = useMemo(() => createStyles(Colors, Typography, Spacing, BorderRadius), [Colors, Typography, Spacing, BorderRadius]);
+  const monthRange = useMemo(() => getCurrentMonthRange(), []);
 
   const [filter, setFilter] = useState<TransactionFilter>({
     page: 1,
@@ -44,8 +47,14 @@ export default function TransactionsScreen() {
   const transactions = data?.data ?? [];
 
   const handleFilterChange = useCallback((newFilter: TransactionFilter) => {
+    lightImpact();
     setFilter(newFilter);
   }, []);
+
+  const handleRefresh = useCallback(async () => {
+    mediumImpact();
+    await refetch();
+  }, [refetch]);
 
   const renderItem = useCallback(
     ({ item }: { item: Transaction }) => (
@@ -65,14 +74,24 @@ export default function TransactionsScreen() {
       <TransactionFilters filter={filter} onFilterChange={handleFilterChange} />
 
       {isLoading && transactions.length === 0 ? (
-        <View style={styles.centered}>
-          <ActivityIndicator size="large" color={Colors.primary} />
+        <View style={styles.listContent}>
+          <TransactionSkeleton />
+          <TransactionSkeleton />
+          <TransactionSkeleton />
+          <TransactionSkeleton />
+          <TransactionSkeleton />
         </View>
       ) : error ? (
         <View style={styles.centered}>
           <Text style={styles.errorIcon}>⚠️</Text>
           <Text style={styles.errorText}>Gagal memuat transaksi</Text>
-          <Pressable style={styles.retryButton} onPress={() => refetch()}>
+          <Pressable
+            style={styles.retryButton}
+            onPress={() => {
+              mediumImpact();
+              refetch();
+            }}
+          >
             <Text style={styles.retryText}>Coba Lagi</Text>
           </Pressable>
         </View>
@@ -81,7 +100,7 @@ export default function TransactionsScreen() {
           <Text style={styles.emptyIcon}>📋</Text>
           <Text style={styles.emptyText}>Belum ada transaksi</Text>
           <Text style={styles.emptyHint}>
-            Tekan tombol + untuk menambah transaksi
+            Sync Gmail atau tambah transaksi manual
           </Text>
         </View>
       ) : (
@@ -91,26 +110,20 @@ export default function TransactionsScreen() {
           keyExtractor={keyExtractor}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.listContent}
-          onRefresh={refetch}
-          refreshing={isLoading}
+          refreshControl={
+            <RefreshControl
+              refreshing={isLoading}
+              onRefresh={handleRefresh}
+              tintColor={Colors.primary}
+            />
+          }
         />
       )}
-
-      {/* Floating Action Button */}
-      <Pressable
-        style={({ pressed }) => [
-          styles.fab,
-          pressed && styles.fabPressed,
-        ]}
-        onPress={() => router.push('/(tabs)/transactions/add')}
-      >
-        <MaterialIcons name="add" size={28} color={Colors.text} />
-      </Pressable>
     </SafeAreaView>
   );
 }
 
-function createStyles(Colors: ColorPalette, Typography: TypographySet, Spacing: any, BorderRadius: any, Shadows: any) {
+function createStyles(Colors: ColorPalette, Typography: TypographySet, Spacing: any, BorderRadius: any) {
   return StyleSheet.create({
     container: {
       flex: 1,
@@ -128,7 +141,7 @@ function createStyles(Colors: ColorPalette, Typography: TypographySet, Spacing: 
       flex: 1,
       justifyContent: 'center',
       alignItems: 'center',
-      paddingBottom: Spacing.xxl,
+      paddingBottom: 100,
     },
     emptyIcon: {
       fontSize: 48,
@@ -156,28 +169,15 @@ function createStyles(Colors: ColorPalette, Typography: TypographySet, Spacing: 
       paddingHorizontal: Spacing.lg,
       paddingVertical: Spacing.sm,
       borderRadius: BorderRadius.md,
+      borderWidth: 1,
+      borderColor: Colors.border,
     },
     retryText: {
-      ...Typography.body,
+      ...Typography.bodyBold,
       color: Colors.primary,
     },
     listContent: {
-      paddingBottom: 80, // space for FAB
-    },
-    fab: {
-      position: 'absolute',
-      right: Spacing.md,
-      bottom: Spacing.lg,
-      width: 56,
-      height: 56,
-      borderRadius: BorderRadius.full,
-      backgroundColor: Colors.primary,
-      justifyContent: 'center',
-      alignItems: 'center',
-      ...Shadows.card,
-    },
-    fabPressed: {
-      backgroundColor: Colors.primaryDark,
+      paddingBottom: 100, // space for tab bar and padding
     },
   });
 }

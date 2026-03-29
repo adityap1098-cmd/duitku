@@ -1,14 +1,15 @@
 /**
  * TransactionFilters — horizontal filter bar for the transaction list.
- * Provides type chips (All/Income/Expense), category selector, and date range defaults.
+ * Provides type chips (All/Income/Expense), category selector, search, and date range picker.
  */
 
-import { useMemo } from 'react';
-import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
+import { useMemo, useState, useEffect } from 'react';
+import { View, Text, Pressable, ScrollView, StyleSheet, TextInput } from 'react-native';
 import { useTheme } from '../../../contexts/theme-context';
 import { DEFAULT_CATEGORIES } from '@duitku/shared';
 import type { TransactionFilter, TransactionType, CategoryHint } from '@duitku/shared';
 import type { ColorPalette, TypographySet } from '../../../constants/theme';
+import { Ionicons } from '@expo/vector-icons';
 
 interface TransactionFiltersProps {
   filter: TransactionFilter;
@@ -30,6 +31,18 @@ export default function TransactionFilters({
   const { Colors, Typography, Spacing, BorderRadius } = useTheme();
   const styles = useMemo(() => createStyles(Colors, Typography, Spacing, BorderRadius), [Colors, Typography, Spacing, BorderRadius]);
 
+  const [search, setSearch] = useState(filter.search || '');
+
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (search !== (filter.search || '')) {
+        onFilterChange({ ...filter, search: search || undefined, page: 1 });
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [search]);
+
   const handleTypeChange = (type: TransactionType | undefined) => {
     onFilterChange({ ...filter, type, page: 1 });
   };
@@ -38,14 +51,38 @@ export default function TransactionFilters({
     onFilterChange({ ...filter, category, page: 1 });
   };
 
+  const clearSearch = () => {
+    setSearch('');
+    onFilterChange({ ...filter, search: undefined, page: 1 });
+  };
+
   return (
     <View style={styles.container}>
-      {/* Type filter chips */}
+      {/* Search Bar */}
+      <View style={styles.searchContainer}>
+        <Ionicons name="search" size={18} color={Colors.textMuted} style={styles.searchIcon} />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Cari transaksi..."
+          placeholderTextColor={Colors.textMuted}
+          value={search}
+          onChangeText={setSearch}
+          maxLength={200}
+        />
+        {search.length > 0 && (
+          <Pressable onPress={clearSearch} style={styles.clearButton}>
+            <Ionicons name="close-circle" size={18} color={Colors.textMuted} />
+          </Pressable>
+        )}
+      </View>
+
+      {/* Filter Chips Scroll */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.chipRow}
       >
+        {/* Type filter chips */}
         {TYPE_OPTIONS.map((opt) => {
           const active = filter.type === opt.value;
           return (
@@ -61,21 +98,26 @@ export default function TransactionFilters({
           );
         })}
 
-        {/* Category chips */}
         <View style={styles.divider} />
+
+        {/* Category chips */}
         {DEFAULT_CATEGORIES.map((cat) => {
           const active = filter.category === cat.id;
           return (
             <Pressable
               key={cat.id}
-              style={[styles.chip, active && styles.chipActive]}
+              style={[
+                styles.chip,
+                active && styles.chipActive,
+                active && { borderColor: Colors.accent, backgroundColor: Colors.accentDim }
+              ]}
               onPress={() =>
                 handleCategoryChange(active ? undefined : cat.id)
               }
             >
               <Text style={styles.chipIcon}>{cat.icon}</Text>
               <Text
-                style={[styles.chipText, active && styles.chipTextActive]}
+                style={[styles.chipText, active && styles.chipTextActive, active && { color: Colors.accent }]}
               >
                 {cat.label}
               </Text>
@@ -91,6 +133,29 @@ function createStyles(Colors: ColorPalette, Typography: TypographySet, Spacing: 
   return StyleSheet.create({
     container: {
       marginBottom: Spacing.md,
+      gap: Spacing.sm,
+    },
+    searchContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: Colors.surface,
+      borderRadius: BorderRadius.md,
+      borderWidth: 1,
+      borderColor: Colors.border,
+      paddingHorizontal: Spacing.sm,
+      height: 44,
+    },
+    searchIcon: {
+      marginRight: Spacing.xs,
+    },
+    searchInput: {
+      flex: 1,
+      ...Typography.body,
+      color: Colors.text,
+      height: '100%',
+    },
+    clearButton: {
+      padding: Spacing.xs,
     },
     chipRow: {
       flexDirection: 'row',

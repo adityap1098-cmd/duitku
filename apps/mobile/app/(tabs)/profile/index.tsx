@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, Switch, Pressable } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Switch, Pressable, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../../../contexts/theme-context';
 import { useAuthStore } from '../../../stores/auth-store';
@@ -18,7 +18,7 @@ const THEME_OPTIONS: { label: string; value: ThemePreference; icon: string }[] =
 export default function ProfileScreen() {
   const { Colors, Typography, Spacing, BorderRadius } = useTheme();
   const styles = useMemo(() => createStyles(Colors, Typography, Spacing, BorderRadius), [Colors, Typography, Spacing, BorderRadius]);
-  const { user } = useAuthStore();
+  const { user, logout } = useAuthStore();
 
   // Settings store
   const biometricEnabled = useSettingsStore((s) => s.biometricEnabled);
@@ -39,6 +39,21 @@ export default function ProfileScreen() {
 
   const handleBiometricToggle = (value: boolean) => {
     setBiometricEnabled(value);
+  };
+
+  const handleLogout = () => {
+    Alert.alert(
+      'Logout',
+      'Apakah Anda yakin ingin keluar dari akun?',
+      [
+        { text: 'Batal', style: 'cancel' },
+        {
+          text: 'Logout',
+          style: 'destructive',
+          onPress: () => logout()
+        },
+      ]
+    );
   };
 
   return (
@@ -135,6 +150,16 @@ export default function ProfileScreen() {
             <Text style={styles.menuValue}>0.1.0</Text>
           </View>
         </View>
+
+        <Pressable
+          style={({ pressed }) => [
+            styles.logoutButton,
+            pressed && styles.logoutButtonPressed
+          ]}
+          onPress={handleLogout}
+        >
+          <Text style={styles.logoutText}>Keluar Akun</Text>
+        </Pressable>
       </ScrollView>
     </SafeAreaView>
   );
@@ -265,6 +290,22 @@ function createStyles(Colors: ColorPalette, Typography: TypographySet, Spacing: 
     },
     menuValue: {
       ...Typography.caption,
+    },
+    logoutButton: {
+      backgroundColor: Colors.redDim,
+      borderRadius: BorderRadius.md,
+      paddingVertical: 14,
+      alignItems: 'center',
+      marginBottom: Spacing.xxl,
+      borderWidth: 1,
+      borderColor: Colors.red + '30',
+    },
+    logoutButtonPressed: {
+      backgroundColor: Colors.redDim + '80',
+    },
+    logoutText: {
+      ...Typography.bodyBold,
+      color: Colors.red,
     },
   });
 }

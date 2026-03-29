@@ -9,6 +9,7 @@ import type { AppEnv } from '../index';
 import type { TransactionFilter } from '@duitku/shared';
 import { authMiddleware } from '../middleware/auth';
 import * as transactionService from '../services/transaction';
+import { Errors } from '../lib/errors';
 
 const transactions = new Hono<AppEnv>();
 
@@ -21,12 +22,19 @@ transactions.use('*', authMiddleware);
  */
 transactions.get('/summary', async (c) => {
   const userId = c.get('userId');
+  const search = c.req.query('search');
+
+  // Search length cap — prevent DoS via massive query strings
+  if (search && search.length > 200) {
+    throw Errors.VALIDATION('Search query too long (max 200 chars)');
+  }
+
   const filter: TransactionFilter = {
     type: c.req.query('type') as TransactionFilter['type'],
     category: c.req.query('category') as TransactionFilter['category'],
     date_from: c.req.query('date_from'),
     date_to: c.req.query('date_to'),
-    search: c.req.query('search'),
+    search: search,
   };
 
   const summary = await transactionService.getSummary(c.env.DB, userId, filter);
@@ -38,6 +46,13 @@ transactions.get('/summary', async (c) => {
  */
 transactions.get('/', async (c) => {
   const userId = c.get('userId');
+  const search = c.req.query('search');
+
+  // Search length cap
+  if (search && search.length > 200) {
+    throw Errors.VALIDATION('Search query too long (max 200 chars)');
+  }
+
   const filter: TransactionFilter = {
     page: c.req.query('page') ? Number(c.req.query('page')) : undefined,
     per_page: c.req.query('per_page') ? Number(c.req.query('per_page')) : undefined,
@@ -45,7 +60,7 @@ transactions.get('/', async (c) => {
     category: c.req.query('category') as TransactionFilter['category'],
     date_from: c.req.query('date_from'),
     date_to: c.req.query('date_to'),
-    search: c.req.query('search'),
+    search: search,
   };
 
   const result = await transactionService.list(c.env.DB, userId, filter);
