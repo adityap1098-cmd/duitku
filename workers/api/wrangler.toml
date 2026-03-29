@@ -6,13 +6,13 @@ compatibility_date = "2024-06-20"
 [[d1_databases]]
 binding = "DB"
 database_name = "duitku-db"
-database_id = "<YOUR_D1_DATABASE_ID>"
+database_id = "1f75630c-82ec-4c02-99c1-6439c56d2b98"
 
 # KV Namespace (for refresh tokens + rate limiting)
 # For local dev: any string works. For deploy: wrangler kv namespace create KV
 [[kv_namespaces]]
 binding = "KV"
-id = "local-kv-dev"
+id = "d799038f0ec7486eabad52db4e7fc2a3"
 
 # R2 Bucket (for receipts/exports — Phase 2+)
 # [[r2_buckets]]
@@ -23,8 +23,8 @@ id = "local-kv-dev"
 # Note: GOOGLE_CLIENT_ID is a public identifier (safe in vars, not a secret)
 [vars]
 GOOGLE_CLIENT_ID = "695257571068-kd7rpjmpuajo4notqnvl931im2a7971s.apps.googleusercontent.com"
-GOOGLE_REDIRECT_URI = "http://localhost:8787/auth/callback"
-ALLOWED_ORIGINS = "http://localhost:8081,https://auth.expo.io"
+GOOGLE_REDIRECT_URI = "https://duitku-api.jamespurnamaya.workers.dev/auth/callback"
+ALLOWED_ORIGINS = "http://localhost:8081,https://auth.expo.io,https://duitku-api.jamespurnamaya.workers.dev"
 
 # Secrets (set via `wrangler secret put <NAME>` — NEVER put in this file):
 # - JWT_SECRET          — min 32 chars, used for access token signing
