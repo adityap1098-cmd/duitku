@@ -37,11 +37,18 @@ export interface EmailParser {
  */
 export function parseRupiahAmount(text: string): number | null {
   // Match Rp prefix (optional), optional space, then digits with dot/comma separators
-  // Handles: Rp 178.404, Rp 178,404, Rp150.000, Rp 1.250.000
+  // Handles: Rp 178.404, Rp 178,404, Rp150.000, Rp 1.250.000, Rp1.000.000,00
   const match = text.match(/Rp\.?\s*([\d.,]+)/i);
   if (match) {
-    // Remove all dots and commas (both are thousand separators in Indonesian context)
-    const raw = match[1].replace(/[.,]/g, '');
+    let raw = match[1];
+
+    // Handle decimal: if ends with ,XX or .XX (1-2 digits after separator at end),
+    // treat that last separator as decimal point and drop the fractional part
+    raw = raw.replace(/[.,]\d{1,2}$/, '');
+
+    // Now strip remaining dots and commas (thousand separators)
+    raw = raw.replace(/[.,]/g, '');
+
     const num = parseInt(raw, 10);
     return isNaN(num) || num <= 0 ? null : num;
   }
@@ -49,7 +56,9 @@ export function parseRupiahAmount(text: string): number | null {
   // Fallback: try bare number with dots/commas (e.g. "150.000" or "150,000")
   const bareMatch = text.match(/([\d.,]{3,})/);
   if (bareMatch) {
-    const raw = bareMatch[1].replace(/[.,]/g, '');
+    let raw = bareMatch[1];
+    raw = raw.replace(/[.,]\d{1,2}$/, '');
+    raw = raw.replace(/[.,]/g, '');
     const num = parseInt(raw, 10);
     return isNaN(num) || num <= 0 ? null : num;
   }
