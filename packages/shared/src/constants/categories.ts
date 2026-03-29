@@ -14,6 +14,10 @@ export type CategoryHint =
   | 'entertainment'
   | 'health'
   | 'education'
+  | 'salary'
+  | 'freelance'
+  | 'investment'
+  | 'gift'
   | 'other';
 
 export interface Category {
@@ -34,5 +38,9 @@ export const DEFAULT_CATEGORIES: readonly Category[] = [
   { id: 'entertainment', label: 'Hiburan', icon: '🎬' },
   { id: 'health', label: 'Kesehatan', icon: '🏥' },
   { id: 'education', label: 'Pendidikan', icon: '📚' },
+  { id: 'salary', label: 'Gaji', icon: '💰' },
+  { id: 'freelance', label: 'Freelance', icon: '💻' },
+  { id: 'investment', label: 'Investasi', icon: '📈' },
+  { id: 'gift', label: 'Hadiah', icon: '🎁' },
   { id: 'other', label: 'Lainnya', icon: '📦' },
 ] as const;

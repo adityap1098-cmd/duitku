@@ -2,13 +2,27 @@ name = "duitku-api"
 main = "src/index.ts"
 compatibility_date = "2024-06-20"
 
-# D1 Database
+# ┌──────────────────────────────────────────────────────────┐
+# │ DEPLOYMENT CHECKLIST                                      │
+# │                                                            │
+# │ 1. wrangler d1 create duitku-db → paste database_id below │
+# │ 2. wrangler kv namespace create KV → paste id below       │
+# │ 3. wrangler secret put JWT_SECRET                          │
+# │ 4. wrangler secret put GOOGLE_CLIENT_SECRET                │
+# │ 5. wrangler secret put ENCRYPTION_KEY                      │
+# │ 6. Set GOOGLE_REDIRECT_URI in [vars] to production URL     │
+# │ 7. Update ALLOWED_ORIGINS with production origins          │
+# │ 8. wrangler d1 migrations apply duitku-db                  │
+# │ 9. wrangler deploy                                         │
+# └──────────────────────────────────────────────────────────┘
+
+# D1 Database — run: wrangler d1 create duitku-db
 [[d1_databases]]
 binding = "DB"
 database_name = "duitku-db"
 database_id = "<YOUR_D1_DATABASE_ID>"
 
-# KV Namespace (for refresh tokens)
+# KV Namespace — run: wrangler kv namespace create KV
 [[kv_namespaces]]
 binding = "KV"
 id = "<YOUR_KV_NAMESPACE_ID>"
@@ -18,16 +32,16 @@ id = "<YOUR_KV_NAMESPACE_ID>"
 # binding = "R2"
 # bucket_name = "duitku-storage"
 
-# Environment variables (fill in your values)
+# Environment variables
 [vars]
 GOOGLE_CLIENT_ID = "<YOUR_GOOGLE_CLIENT_ID>"
-GOOGLE_REDIRECT_URI = "http://localhost:8787/auth/callback"
-ALLOWED_ORIGINS = "http://localhost:8081"
+GOOGLE_REDIRECT_URI = "<YOUR_WORKER_URL>/auth/callback"
+ALLOWED_ORIGINS = "http://localhost:8081,https://auth.expo.io"
 
-# Secrets (set via `wrangler secret put <NAME>`):
-# - JWT_SECRET
-# - GOOGLE_CLIENT_SECRET
-# - ENCRYPTION_KEY
+# Secrets (set via `wrangler secret put <NAME>` — NEVER put in this file):
+# - JWT_SECRET          — min 32 chars, used for access token signing
+# - GOOGLE_CLIENT_SECRET — from Google Cloud Console
+# - ENCRYPTION_KEY       — min 32 chars, used for encrypting Gmail refresh tokens
 
 # Cron triggers for Gmail sync
 [triggers]

@@ -8,7 +8,8 @@ binding = "DB"
 database_name = "duitku-db"
 database_id = "<YOUR_D1_DATABASE_ID>"
 
-# KV Namespace (for refresh tokens)
+# KV Namespace (for refresh tokens + rate limiting)
+# For local dev: any string works. For deploy: wrangler kv namespace create KV
 [[kv_namespaces]]
 binding = "KV"
 id = "local-kv-dev"
@@ -18,14 +19,17 @@ id = "local-kv-dev"
 # binding = "R2"
 # bucket_name = "duitku-storage"
 
-# Environment variables (fill in your values)
+# Environment variables
+# Note: GOOGLE_CLIENT_ID is a public identifier (safe in vars, not a secret)
 [vars]
 GOOGLE_CLIENT_ID = "695257571068-kd7rpjmpuajo4notqnvl931im2a7971s.apps.googleusercontent.com"
-ALLOWED_ORIGINS = "http://localhost:8081,https://auth.expo.io,https://benefit-bold-usr-earned.trycloudflare.com"
+GOOGLE_REDIRECT_URI = "http://localhost:8787/auth/callback"
+ALLOWED_ORIGINS = "http://localhost:8081,https://auth.expo.io"
 
-# Secrets (set via `wrangler secret put <NAME>`):
-# - JWT_SECRET
-# - GOOGLE_CLIENT_SECRET
+# Secrets (set via `wrangler secret put <NAME>` — NEVER put in this file):
+# - JWT_SECRET          — min 32 chars, used for access token signing
+# - GOOGLE_CLIENT_SECRET — from Google Cloud Console
+# - ENCRYPTION_KEY       — min 32 chars, used for encrypting Gmail refresh tokens
 
 # Cron triggers for Gmail sync
 [triggers]
