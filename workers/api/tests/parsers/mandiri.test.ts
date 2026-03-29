@@ -101,7 +101,7 @@ describe('mandiriParser — credit (income)', () => {
     expect(result).not.toBeNull();
     expect(result!.amount).toBe(2000000);
     expect(result!.type).toBe('income');
-    expect(result!.description).toContain('Credit');
+    expect(result!.description).toContain('Kredit');
   });
 
   it('detects income with "masuk" keyword', () => {

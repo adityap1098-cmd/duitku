@@ -5,9 +5,19 @@
 import { describe, it, expect } from 'vitest';
 import { Hono } from 'hono';
 import { bodyLimitMiddleware } from '../../src/middleware/body-limit';
+import { AppError } from '../../src/lib/errors';
 
 function createApp(maxBytes?: number) {
   const app = new Hono();
+
+  // Register error handler (same as main app)
+  app.onError((err, c) => {
+    if (err instanceof AppError) {
+      return c.json(err.toJSON(), err.status as any);
+    }
+    return c.json({ error: { code: 'INTERNAL_ERROR', message: 'Internal server error' } }, 500);
+  });
+
   app.use('*', bodyLimitMiddleware(maxBytes));
   app.post('/test', async (c) => {
     const body = await c.req.text();
