@@ -21,8 +21,6 @@
     "node": ">=18.0.0"
   },
   "dependencies": {
-    "expo-linear-gradient": "^55.0.10-canary-20260328-2049187",
-    "react-dom": "^19.0.0",
-    "react-native-worklets": "^0.8.1"
+    "react-dom": "^19.0.0"
   }
 }
