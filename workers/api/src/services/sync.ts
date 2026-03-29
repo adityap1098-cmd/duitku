@@ -243,7 +243,8 @@ export async function syncUserEmails(
     const query = buildGmailQuery(afterDate, beforeDate);
     console.log(`[sync] User ${userId} | Gmail query: ${query}`);
 
-    const messages = await listGmailMessages(accessToken, query, 20);
+    const maxResults = (afterDate || beforeDate) ? 50 : 20;
+    const messages = await listGmailMessages(accessToken, query, maxResults);
     emailsFound = messages.length;
     console.log(`[sync] User ${userId} | Emails found: ${emailsFound}`);
 
@@ -272,7 +273,7 @@ export async function syncUserEmails(
         const parser = findParserForEmail(email.from);
         if (!parser) {
           console.log(`[sync] Message ${msgRef.id} | SKIP: no parser matched for sender "${email.from}"`);
-          await markEmailProcessed(db, userId, msgRef.id);
+          // Don't mark as processed — future parser additions should re-evaluate
           continue;
         }
 
@@ -282,7 +283,7 @@ export async function syncUserEmails(
         const parsed: ParsedTransaction | null = parser.parse(email);
         if (!parsed) {
           console.log(`[sync] Message ${msgRef.id} | SKIP: parser returned null (no amount or unrecognized format)`);
-          await markEmailProcessed(db, userId, msgRef.id);
+          // Don't mark as processed — parser updates should re-evaluate
           continue;
         }
 
