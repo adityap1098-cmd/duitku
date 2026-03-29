@@ -9,6 +9,7 @@ import { insights } from './insights';
 import { recurring } from './recurring';
 import { sync } from './sync';
 import { transactions } from './transactions';
+import { authRateLimitMiddleware } from '../middleware/rate-limit';
 
 /**
  * Register all route groups on the Hono app.
@@ -16,7 +17,11 @@ import { transactions } from './transactions';
  */
 export function registerRoutes(app: Hono<AppEnv>) {
   app.route('/health', health);
+
+  // Auth endpoints get stricter rate limiting (10 req/min vs 100)
+  app.use('/auth/*', authRateLimitMiddleware);
   app.route('/auth', auth);
+
   app.route('/budgets', budgets);
   app.route('/export', exportRoutes);
   app.route('/insights', insights);

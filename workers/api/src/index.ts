@@ -4,6 +4,9 @@ import { cors } from 'hono/cors';
 import { AppError } from './lib/errors';
 import { registerRoutes } from './routes/index';
 import { syncAllUsers } from './services/sync';
+import { securityHeaders } from './middleware/security-headers';
+import { rateLimitMiddleware } from './middleware/rate-limit';
+import { bodyLimitMiddleware } from './middleware/body-limit';
 
 /**
  * Cloudflare Worker environment bindings.
@@ -48,6 +51,15 @@ app.use('*', async (c, next) => {
 
   return corsMiddleware(c, next);
 });
+
+// Security headers — set on every response
+app.use('*', securityHeaders);
+
+// Body size limit — 1MB max (before any body parsing)
+app.use('*', bodyLimitMiddleware());
+
+// Rate limiting — 100 req/min general (KV-based)
+app.use('*', rateLimitMiddleware);
 
 // Global error handler — converts AppError to structured JSON
 app.onError((err, c) => {
