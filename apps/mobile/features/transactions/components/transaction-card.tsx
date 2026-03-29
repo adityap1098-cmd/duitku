@@ -89,7 +89,7 @@ export default function TransactionCard({ transaction }: TransactionCardProps) {
           {isIncome ? '+' : '-'} {formatRupiah(transaction.amount)}
         </Text>
         <View style={styles.badgeRow}>
-          {transaction.source === 'sync' ? (
+          {transaction.source === 'gmail_sync' ? (
             <View style={[styles.badge, { backgroundColor: Colors.accentDim }]}>
               <Text style={[styles.badgeText, { color: Colors.accent }]}>Synced</Text>
             </View>

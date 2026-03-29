@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
-import { View, Text, StyleSheet, Image, ScrollView, ActivityIndicator } from 'react-native';
+import React, { useMemo } from 'react';
+import { View, Text, StyleSheet, Image, ScrollView, ActivityIndicator, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../../../contexts/theme-context';
@@ -8,23 +8,56 @@ import { useTransactions, useTransactionSummary } from '../../../features/transa
 import TransactionCard from '../../../features/transactions/components/transaction-card';
 import SyncStatus from '../../../features/sync/components/sync-status';
 import { formatRupiah } from '../../../lib/format';
+import { useQueryClient } from '@tanstack/react-query';
 import type { ColorPalette, TypographySet } from '../../../constants/theme';
+
+/** Get current month date range (YYYY-MM-DD) */
+function getCurrentMonthRange(): { date_from: string; date_to: string } {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return {
+    date_from: `${year}-${pad(month + 1)}-01`,
+    date_to: `${year}-${pad(month + 1)}-${pad(lastDay.getDate())}`,
+  };
+}
 
 export default function HomeScreen() {
   const { Colors, Typography, Spacing, BorderRadius } = useTheme();
   const { user } = useAuthStore();
+  const queryClient = useQueryClient();
   const styles = useMemo(() => createStyles(Colors, Typography, Spacing, BorderRadius), [Colors, Typography, Spacing, BorderRadius]);
 
-  // Fetch summary and recent transactions
-  const { data: summaryRes, isLoading: summaryLoading } = useTransactionSummary();
-  const { data: recentRes, isLoading: recentLoading } = useTransactions({ per_page: 5 });
+  // Current month filter for summary
+  const monthRange = useMemo(() => getCurrentMonthRange(), []);
+
+  // Fetch summary (current month) and recent transactions
+  const { data: summaryRes, isLoading: summaryLoading, refetch: refetchSummary } = useTransactionSummary(monthRange);
+  const { data: recentRes, isLoading: recentLoading, refetch: refetchRecent } = useTransactions({ per_page: 5 });
 
   const summary = summaryRes?.data;
+
+  // Pull-to-refresh
+  const [refreshing, setRefreshing] = React.useState(false);
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    await Promise.all([refetchSummary(), refetchRecent()]);
+    setRefreshing(false);
+  }, [refetchSummary, refetchRecent]);
   const recentTransactions = recentRes?.data ?? [];
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primary} />
+        }
+      >
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerRow}>
