@@ -118,10 +118,10 @@ describe('shopeeParser — negative cases', () => {
 
 // ─── Parser Registry ────────────────────────────────────────────────
 describe('parser registry', () => {
-  it('getAllParsers returns all 7 parsers', () => {
+  it('getAllParsers returns all 9 parsers', () => {
     const parsers = getAllParsers();
-    expect(parsers).toHaveLength(7);
-    expect(parsers.map(p => p.platform)).toEqual(['grab', 'gojek', 'shopee', 'tokopedia', 'bca', 'mandiri', 'bni']);
+    expect(parsers).toHaveLength(9);
+    expect(parsers.map(p => p.platform)).toEqual(['grab', 'gojek', 'shopee', 'tokopedia', 'bca', 'mandiri', 'bni', 'seabank', 'jago']);
   });
 
   it('findParserForEmail matches grab sender', () => {

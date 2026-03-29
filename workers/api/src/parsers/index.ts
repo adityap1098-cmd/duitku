@@ -11,6 +11,8 @@ import { tokopediaParser } from './tokopedia';
 import { bcaParser } from './bca';
 import { mandiriParser } from './mandiri';
 import { bniParser } from './bni';
+import { seabankParser } from './seabank';
+import { jagoParser } from './jago';
 
 /** All registered email parsers */
 const parsers: EmailParser[] = [
@@ -21,6 +23,8 @@ const parsers: EmailParser[] = [
   bcaParser,
   mandiriParser,
   bniParser,
+  seabankParser,
+  jagoParser,
 ];
 
 /** Get all registered parsers */

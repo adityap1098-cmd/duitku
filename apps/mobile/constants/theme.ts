@@ -78,6 +78,8 @@ export const DarkColors = {
   tokopedia: '#42B549',
   ovo: '#4C2A86',
   dana: '#108EE9',
+  seabank: '#00AAB8',
+  jago: '#FFD700',
 
   // ─── UI ────────────────────────────────
   divider: '#1E2A4A',
@@ -142,6 +144,8 @@ export const LightColors = {
   tokopedia: '#42B549',
   ovo: '#4C2A86',
   dana: '#108EE9',
+  seabank: '#00AAB8',
+  jago: '#FFD700',
 
   // UI
   divider: '#F1F5F9',
@@ -196,6 +200,8 @@ export type ColorPalette = {
   readonly tokopedia: string;
   readonly ovo: string;
   readonly dana: string;
+  readonly seabank: string;
+  readonly jago: string;
   readonly divider: string;
   readonly overlay: string;
   readonly tabBarBackground: string;
