@@ -28,7 +28,7 @@ function extractAmount(body: string): number | null {
 /** Detect transaction type from keywords */
 function detectType(text: string): 'income' | 'expense' {
   // Expense keywords — check first (more specific)
-  const expenseKeywords = /(?:membayar|bayar|pembayaran|belanja|beli|purchase|debet|debit|keluar|pengeluaran|transfer keluar|melakukan transfer)/i;
+  const expenseKeywords = /(?:membayar|bayar|pembayaran|belanja|beli|purchase|debet|debit|keluar|pengeluaran|transfer keluar|melakukan transfer|melakukan transaksi)/i;
   if (expenseKeywords.test(text)) return 'expense';
 
   // Income keywords
@@ -53,12 +53,22 @@ export const seabankParser: EmailParser = {
   senderPatterns: [
     /alerts?@seabank\.co\.id/i,
     /no-?reply@seabank\.co\.id/i,
+    /info@seabank\.co\.id/i,
     /.*@mail\.seabank\.co\.id/i,
   ],
 
   parse(email: EmailInput): ParsedTransaction | null {
     const { body, subject, date } = email;
     const fullText = `${subject} ${body}`;
+
+    // Skip non-transaction emails (promos, activation, info)
+    const skipPatterns = [
+      /promo|diskon|cashback/i,
+      /aktivasi|aktivin/i,
+      /ramadan|lebaran|spesial/i,
+      /pinjam|limit/i,
+    ];
+    if (skipPatterns.some((p) => p.test(subject))) return null;
 
     const amount = extractAmount(fullText);
     if (amount === null) return null;

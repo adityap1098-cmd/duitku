@@ -28,7 +28,7 @@ function extractAmount(body: string): number | null {
 /** Detect transaction type from keywords */
 function detectType(text: string): 'income' | 'expense' {
   // Expense keywords — check first (more specific)
-  const expenseKeywords = /(?:membayar|bayar|pembayaran|belanja|beli|purchase|debet|debit|keluar|pengeluaran|transfer keluar|melakukan transfer)/i;
+  const expenseKeywords = /(?:membayar|bayar|pembayaran|belanja|beli|purchase|debet|debit|keluar|pengeluaran|transfer keluar|melakukan transfer|melakukan transaksi)/i;
   if (expenseKeywords.test(text)) return 'expense';
 
   // Income keywords
@@ -63,10 +63,13 @@ export const jagoParser: EmailParser = {
     // Skip non-transaction emails (promos, info, security alerts)
     const skipPatterns = [
       /waspada|penipuan/i,
-      /promo|diskon|potongan harga/i,
+      /promo|diskon|potongan harga|cashback/i,
       /info terkait/i,
       /rekening tidak aktif|dormant/i,
       /mengunci.*kartu/i,
+      /kopi.*cashback|cashback.*kopi/i,
+      /ngabuburit|ramadan|lebaran/i,
+      /dana cepat|pinjam/i,
     ];
     if (skipPatterns.some((p) => p.test(subject))) return null;
 
