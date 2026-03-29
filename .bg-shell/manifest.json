@@ -1,1 +1,16 @@
-[]
+[
+  {
+    "id": "2cccef76",
+    "label": "wrangler-api",
+    "command": "cd workers/api && npx wrangler dev",
+    "cwd": "H:\\AI\\PROJECT WITH GSD\\DUITKU",
+    "ownerSessionFile": "C:\\Users\\adity\\.gsd\\sessions\\--H--AI-PROJECT WITH GSD-DUITKU--\\2026-03-29T02-12-34-365Z_c327c503-730e-4dbd-9ac9-58bbb2a27a76.jsonl",
+    "persistAcrossSessions": false,
+    "startedAt": 1774751797847,
+    "processType": "server",
+    "group": "duitku",
+    "readyPattern": null,
+    "readyPort": 8787,
+    "pid": 50584
+  }
+]
