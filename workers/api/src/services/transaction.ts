@@ -22,6 +22,9 @@ import { Errors } from '../lib/errors';
 const VALID_TYPES: TransactionType[] = ['income', 'expense'];
 const VALID_CATEGORIES: string[] = DEFAULT_CATEGORIES.map((c) => c.id);
 
+/** Max amount: ~1 trillion Rp (prevents integer overflow in aggregations) */
+const MAX_AMOUNT = 999_999_999_999;
+
 function validateAmount(amount: unknown): number {
   if (typeof amount !== 'number' || !Number.isFinite(amount)) {
     throw Errors.VALIDATION('Amount must be a number');
@@ -31,6 +34,9 @@ function validateAmount(amount: unknown): number {
   }
   if (!Number.isInteger(amount)) {
     throw Errors.VALIDATION('Amount must be an integer (no decimals)');
+  }
+  if (amount > MAX_AMOUNT) {
+    throw Errors.VALIDATION(`Amount must not exceed ${MAX_AMOUNT.toLocaleString('id-ID')}`);
   }
   return amount;
 }

@@ -16,22 +16,41 @@ sync.use('*', authMiddleware);
 
 /**
  * POST /sync/trigger — manually trigger Gmail sync for authenticated user.
+ * Includes a KV-based concurrent sync guard to prevent duplicate syncs.
  */
 sync.post('/trigger', async (c) => {
   const userId = c.get('userId');
 
-  const syncLog = await syncService.triggerSync(
-    c.env.DB,
-    userId,
-    c.env.ENCRYPTION_KEY,
-    c.env.GOOGLE_CLIENT_ID,
-    c.env.GOOGLE_CLIENT_SECRET
-  );
+  // Concurrent sync guard — prevent duplicate syncs per user
+  const lockKey = `sync:lock:${userId}`;
+  const existingLock = await c.env.KV.get(lockKey);
+  if (existingLock) {
+    return c.json({
+      success: false,
+      error: { code: 'SYNC_IN_PROGRESS', message: 'A sync is already running for this account' },
+    }, 409);
+  }
 
-  return c.json({
-    success: true,
-    data: syncLog,
-  });
+  // Acquire lock with 5-minute TTL (auto-expires if sync hangs)
+  await c.env.KV.put(lockKey, new Date().toISOString(), { expirationTtl: 300 });
+
+  try {
+    const syncLog = await syncService.triggerSync(
+      c.env.DB,
+      userId,
+      c.env.ENCRYPTION_KEY,
+      c.env.GOOGLE_CLIENT_ID,
+      c.env.GOOGLE_CLIENT_SECRET
+    );
+
+    return c.json({
+      success: true,
+      data: syncLog,
+    });
+  } finally {
+    // Release lock when done (success or failure)
+    await c.env.KV.delete(lockKey);
+  }
 });
 
 /**

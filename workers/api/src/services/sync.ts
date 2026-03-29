@@ -191,7 +191,7 @@ export async function syncUserEmails(
         transactions_created: 0,
         error_message: msg,
       });
-      return getSyncLogById(db, syncLogId);
+      return getSyncLogById(db, syncLogId, userId);
     }
 
     // 2. Refresh access token
@@ -210,7 +210,7 @@ export async function syncUserEmails(
         transactions_created: 0,
         error_message: msg,
       });
-      return getSyncLogById(db, syncLogId);
+      return getSyncLogById(db, syncLogId, userId);
     }
 
     // 3. Build query and list messages
@@ -301,7 +301,7 @@ export async function syncUserEmails(
     });
   }
 
-  return getSyncLogById(db, syncLogId);
+  return getSyncLogById(db, syncLogId, userId);
 }
 
 /**
@@ -390,7 +390,7 @@ export async function triggerSync(
       transactions_created: 0,
       error_message: 'Gmail not connected — no refresh token found',
     });
-    return getSyncLogById(db, syncLogId);
+    return getSyncLogById(db, syncLogId, userId);
   }
 
   return syncUserEmails(
@@ -422,11 +422,12 @@ export async function getLatestSyncLog(
 
 /**
  * Get a specific sync log by ID (internal helper).
+ * Includes user_id filter to maintain manual RLS pattern.
  */
-async function getSyncLogById(db: D1Database, syncLogId: string): Promise<SyncLog> {
+async function getSyncLogById(db: D1Database, syncLogId: string, userId: string): Promise<SyncLog> {
   const row = await db
-    .prepare('SELECT * FROM sync_logs WHERE id = ?')
-    .bind(syncLogId)
+    .prepare('SELECT * FROM sync_logs WHERE id = ? AND user_id = ?')
+    .bind(syncLogId, userId)
     .first<SyncLog>();
 
   if (!row) {
