@@ -82,6 +82,43 @@ describe('verifyJWT', () => {
     );
   });
 
+  it('rejects a token with unsupported algorithm', async () => {
+    // Craft a token with alg: "none"
+    const header = btoa(JSON.stringify({ alg: 'none', typ: 'JWT' }))
+      .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    const payload = btoa(JSON.stringify({
+      sub: 'attacker',
+      email: 'evil@example.com',
+      tier: 'admin',
+      iat: Math.floor(Date.now() / 1000),
+      exp: Math.floor(Date.now() / 1000) + 9999,
+    })).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+
+    const fakeToken = `${header}.${payload}.fakesignature`;
+
+    await expect(verifyJWT(fakeToken, TEST_SECRET)).rejects.toThrow(
+      'Unsupported JWT algorithm: none'
+    );
+  });
+
+  it('rejects a token with RS256 algorithm (confusion attack)', async () => {
+    const header = btoa(JSON.stringify({ alg: 'RS256', typ: 'JWT' }))
+      .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    const payload = btoa(JSON.stringify({
+      sub: 'attacker',
+      email: 'evil@example.com',
+      tier: 'free',
+      iat: Math.floor(Date.now() / 1000),
+      exp: Math.floor(Date.now() / 1000) + 9999,
+    })).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+
+    const fakeToken = `${header}.${payload}.fakesignature`;
+
+    await expect(verifyJWT(fakeToken, TEST_SECRET)).rejects.toThrow(
+      'Unsupported JWT algorithm: RS256'
+    );
+  });
+
   it('rejects an expired token', async () => {
     // Manually craft an expired token by generating and manipulating time
     const { token } = await generateJWT(

@@ -291,6 +291,24 @@ describe('transactionService.create', () => {
     );
   });
 
+  it('rejects amount exceeding max (integer overflow guard)', async () => {
+    const input = { ...validInput(), amount: 1_000_000_000_000 };
+    await expect(transactionService.create(db as any, USER_ID, input)).rejects.toThrow(
+      'must not exceed'
+    );
+  });
+
+  it('allows amount at max boundary', async () => {
+    const input = { ...validInput(), amount: 999_999_999_999 };
+    // Should not throw validation error (may fail on DB mock, but that's OK)
+    try {
+      await transactionService.create(db as any, USER_ID, input);
+    } catch (err) {
+      // If it throws, it should NOT be the overflow error
+      expect((err as Error).message).not.toContain('must not exceed');
+    }
+  });
+
   it('rejects invalid category', async () => {
     const input = { ...validInput(), category: 'invalid-cat' as any };
     await expect(transactionService.create(db as any, USER_ID, input)).rejects.toThrow(
