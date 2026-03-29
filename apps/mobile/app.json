@@ -48,7 +48,8 @@
       "eas": {
         "projectId": "400aa8d0-39f1-4fe4-99aa-1f919ba0d9f3"
       },
-      "router": {}
+      "router": {},
+      "apiUrl": "https://benefit-bold-usr-earned.trycloudflare.com"
     },
     "owner": "aditye"
   }

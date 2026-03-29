@@ -1,16 +1,34 @@
 /**
  * DuitKu App Configuration
  *
- * Environment-aware config. In dev, API points to local Wrangler.
- * In production, this will be set to the deployed Worker URL.
+ * Environment-aware config. Reads API_URL from app.json extra.apiUrl,
+ * which can be overridden per EAS build profile via eas.json env vars.
+ *
+ * For production:
+ *   1. Set apiUrl in app.json extra to your deployed Worker URL
+ *   2. Or use eas.json env to override per profile
  */
 
-const DEV_API_URL = 'https://benefit-bold-usr-earned.trycloudflare.com';
+import Constants from 'expo-constants';
 
-// In production builds, this would come from expo-constants or environment
+/** Fallback for local development */
+const FALLBACK_API_URL = 'http://localhost:8787';
+
+/**
+ * Get API URL from Expo config, with fallback.
+ * Priority: app.json extra.apiUrl → fallback to localhost
+ */
+function getApiUrl(): string {
+  const configUrl = Constants.expoConfig?.extra?.apiUrl;
+  if (configUrl && typeof configUrl === 'string') {
+    return configUrl;
+  }
+  return FALLBACK_API_URL;
+}
+
 export const Config = {
   /** Base URL for the DuitKu API (Cloudflare Worker) */
-  API_URL: DEV_API_URL,
+  API_URL: getApiUrl(),
 
   /** Google OAuth client ID (Web application type) */
   GOOGLE_CLIENT_ID: '695257571068-kd7rpjmpuajo4notqnvl931im2a7971s.apps.googleusercontent.com',
